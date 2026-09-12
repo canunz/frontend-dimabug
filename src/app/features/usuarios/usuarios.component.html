@@ -1,0 +1,140 @@
+<section class="usuarios-page">
+  <section class="usuarios-franja">
+    <div>
+      <p class="kicker">Administración</p>
+      <h1>Sobre usuarios</h1>
+      <p>Crea, edita, inactiva o elimina cuentas. Controla roles de Administrador, Soporte y Usuario.</p>
+    </div>
+    <button type="button" class="btn-crear" (click)="openCreate()">+ Crear nuevo usuario</button>
+  </section>
+
+  @if (success) {
+    <div class="alert success">{{ success }}</div>
+  }
+  @if (error && !modalOpen) {
+    <div class="alert">{{ error }}</div>
+  }
+
+  <div class="meta">
+    <h2>Listado de usuarios</h2>
+    <span>{{ usuarios.length }} registrado{{ usuarios.length === 1 ? '' : 's' }}</span>
+  </div>
+
+  <div class="tabla-wrap">
+    @if (loading) {
+      <p class="muted">Cargando…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th class="col-acciones">Acciones</th>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Creado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of usuarios; track u.usuarioId) {
+            <tr [class.fila-inactiva]="!u.usuarioEstado">
+              <td>
+                <div class="acciones">
+                  <button type="button" class="btn-accion editar" title="Editar" (click)="openEdit(u)">✎</button>
+                  @if (u.usuarioId !== currentUserId) {
+                    <button
+                      type="button"
+                      class="btn-accion estado"
+                      [class.activar]="!u.usuarioEstado"
+                      [title]="u.usuarioEstado ? 'Inactivar' : 'Activar'"
+                      (click)="toggleEstado(u)"
+                    >
+                      {{ u.usuarioEstado ? '⊘' : '✓' }}
+                    </button>
+                    <button type="button" class="btn-accion eliminar" title="Eliminar" (click)="eliminar(u)">🗑</button>
+                  } @else {
+                    <span class="propia" title="Tu cuenta">👤</span>
+                  }
+                </div>
+              </td>
+              <td class="muted">{{ u.usuarioId }}</td>
+              <td>{{ u.usuarioNombre }}</td>
+              <td>{{ u.usuarioEmail }}</td>
+              <td><span class="rol">{{ rolNombre(u) }}</span></td>
+              <td>
+                <span class="estado" [class.activo]="u.usuarioEstado" [class.inactivo]="!u.usuarioEstado">
+                  {{ u.usuarioEstado ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>{{ u.usuarioFechaCreacion ? (u.usuarioFechaCreacion | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="vacio">No hay usuarios registrados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>
+
+@if (modalOpen) {
+  <div class="modal" aria-modal="true" role="dialog">
+    <div class="modal-backdrop" aria-hidden="true"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <p class="kicker">{{ editId ? 'Edición' : 'Nuevo registro' }}</p>
+          <h2>{{ editId ? 'Modificar usuario' : 'Crear nuevo usuario' }}</h2>
+        </div>
+        <button type="button" class="cerrar" (click)="closeModal()" aria-label="Cerrar">✕</button>
+      </div>
+
+      @if (error) {
+        <div class="alert">{{ error }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="modal-form" novalidate>
+        <div class="grid">
+          <label>
+            Nombre completo
+            <input type="text" formControlName="nombre" />
+          </label>
+          <label>
+            Correo
+            <input type="email" formControlName="email" />
+          </label>
+          <label>
+            Rol
+            <select formControlName="rolId">
+              <option [value]="0" disabled>Selecciona un rol</option>
+              @for (r of roles; track r.rolId) {
+                <option [value]="r.rolId">{{ r.rolNombre }}</option>
+              }
+            </select>
+          </label>
+          <label class="check">
+            <input type="checkbox" formControlName="activo" />
+            <span>Usuario activo</span>
+          </label>
+          <label>
+            {{ editId ? 'Nueva contraseña' : 'Contraseña' }}
+            <input type="password" formControlName="password1" [placeholder]="editId ? 'Dejar vacío para no cambiar' : ''" />
+          </label>
+          <label>
+            Confirmar contraseña
+            <input type="password" formControlName="password2" />
+          </label>
+        </div>
+        <div class="acciones-modal">
+          <button type="button" class="btn-sec" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-crear" [disabled]="saving">
+            {{ saving ? 'Guardando…' : editId ? 'Guardar cambios' : 'Guardar usuario' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,0 +1,102 @@
+<section class="login-stage" aria-label="Ingreso al sistema">
+  <img
+    class="login-bg"
+    src="assets/img/background.png"
+    alt=""
+    width="1920"
+    height="1080"
+    decoding="async"
+    fetchpriority="high"
+  />
+
+  <div class="login-card">
+    <div class="login-card-header">
+      <img
+        src="assets/img/letraslogo.png"
+        alt="DimaBug"
+        class="login-brand-logo"
+        width="520"
+        height="160"
+        decoding="async"
+      />
+      <h1>Inicio de sesión</h1>
+      <p>Ingrese sus credenciales corporativas</p>
+    </div>
+
+    @if (error) {
+      <div class="login-alert" role="alert">
+        <p>{{ error }}</p>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="login-field">
+        <label for="username">Usuario</label>
+        <div class="login-input" [class.is-invalid]="!!error">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+              fill="currentColor"
+              d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2.25c-3.6 0-6.75 1.8-6.75 4.05V20h13.5v-1.7c0-2.25-3.15-4.05-6.75-4.05Z"
+            />
+          </svg>
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            placeholder="Usuario o correo institucional"
+            autocomplete="username"
+          />
+        </div>
+      </div>
+
+      <div class="login-field">
+        <label for="password">Contraseña</label>
+        <div class="login-input" [class.is-invalid]="!!error">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+              fill="currentColor"
+              d="M17.25 10.5h-.75V8.25a4.5 4.5 0 0 0-9 0V10.5h-.75A1.5 1.5 0 0 0 4.5 12v6.75A1.5 1.5 0 0 0 6 20.25h12a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5ZM9 8.25a3 3 0 0 1 6 0V10.5H9Zm4.5 6.53v1.72h-3v-1.72a1.5 1.5 0 1 1 3 0Z"
+            />
+          </svg>
+          <input
+            id="password"
+            [type]="showPass ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Contraseña"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="toggle-pass"
+            (click)="showPass = !showPass"
+            [attr.aria-label]="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            @if (showPass) {
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  fill="currentColor"
+                  d="M3.28 2.22 2.22 3.28l3.01 3.01A11.4 11.4 0 0 0 1.5 12c1.5 3.75 5.25 6.75 10.5 6.75a10.7 10.7 0 0 0 4.74-1.08l3.98 3.98 1.06-1.06Zm7.9 9.98 2.62 2.62A3.75 3.75 0 0 1 8.4 11.1l2.78 2.78Zm1.5-6.45A3.75 3.75 0 0 1 15.75 12c0 .27-.03.53-.08.78l2.7 2.7A11.2 11.2 0 0 0 22.5 12c-1.5-3.75-5.25-6.75-10.5-6.75a10.8 10.8 0 0 0-4.2.84l2.4 2.4c.4-.18.84-.29 1.28-.29Z"
+                />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  fill="currentColor"
+                  d="M12 5.25C6.75 5.25 3 8.25 1.5 12c1.5 3.75 5.25 6.75 10.5 6.75S21 15.75 22.5 12C21 8.25 17.25 5.25 12 5.25Zm0 11.25A4.5 4.5 0 1 1 16.5 12 4.5 4.5 0 0 1 12 16.5Zm0-7.5A3 3 0 1 0 15 12a3 3 0 0 0-3-3Z"
+                />
+              </svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="login-row">
+        <a routerLink="/recuperar" class="login-forgot">¿Olvidó su contraseña?</a>
+      </div>
+
+      <button type="submit" class="login-submit" [disabled]="loading">
+        {{ loading ? 'Validando…' : 'Iniciar sesión' }}
+      </button>
+    </form>
+  </div>
+</section>

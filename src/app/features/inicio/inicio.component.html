@@ -1,0 +1,42 @@
+<div class="inicio">
+  <div class="saludo">
+    <h1>¡Hola, {{ primerNombre() }}!</h1>
+    <p>Estamos aquí para ayudarte a resolver más rápido.</p>
+  </div>
+
+  <section class="hero">
+    <div class="hero-copy">
+      <h2>¿Qué necesitas resolver?</h2>
+      <form class="buscador" [formGroup]="searchForm" (ngSubmit)="buscar()">
+        <span class="lupa" aria-hidden="true">🔍</span>
+        <input type="text" formControlName="q" placeholder="Ej.: Impresora fuera de línea, POS no imprime..." />
+        <button type="submit">Buscar</button>
+      </form>
+    </div>
+    <img
+      src="assets/img/iniciologo.png"
+      alt="DimaBug"
+      class="hero-mascota"
+      width="440"
+      height="440"
+      decoding="async"
+    />
+  </section>
+
+  <div class="grid-accesos">
+    @if (isAdmin()) {
+      <button type="button" class="card-acceso" (click)="irUsuarios()">
+        <h3>Usuarios</h3>
+        <p>Crear, editar, inactivar o eliminar cuentas del sistema.</p>
+      </button>
+    }
+    <div class="card-acceso muted">
+      <h3>Nuevo error</h3>
+      <p>Registro de incidencias — próximamente.</p>
+    </div>
+    <div class="card-acceso muted">
+      <h3>Soluciones</h3>
+      <p>Catálogo de soluciones — próximamente.</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,67 @@
+<div class="app-shell" [class.tema-oscuro]="temaOscuro">
+  <aside class="sidebar">
+    <div class="brand-panel">
+      <img src="assets/img/logo_dimabug.png" alt="DimaBug" class="brand-logo" />
+    </div>
+
+    <nav>
+      <a routerLink="/inicio" routerLinkActive="activo" (click)="closeMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+        Inicio
+      </a>
+      <a class="nav-muted">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Hardware
+      </a>
+      <a class="nav-muted">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+        Departamentos
+      </a>
+      <a class="nav-muted">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+        Pruebas
+      </a>
+      <a class="nav-muted">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Soluciones
+      </a>
+      <a class="nav-muted">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Nuevo error
+      </a>
+      @if (isAdmin()) {
+        <a routerLink="/usuarios" routerLinkActive="activo" (click)="closeMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          Usuarios
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <button type="button" class="logout-btn" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header>
+      <button type="button" class="menu-toggle" (click)="toggleMenu()" aria-label="Menú">☰</button>
+      <div class="header-actions">
+        <button type="button" class="tema-toggle" (click)="toggleTema()" [title]="temaOscuro ? 'Tema claro' : 'Tema oscuro'">
+          {{ temaOscuro ? '🌙' : '☀' }}
+          <span>{{ temaOscuro ? 'Oscuro' : 'Claro' }}</span>
+        </button>
+        <div class="usuario">
+          <div class="avatar">{{ iniciales() }}</div>
+          <div class="usuario-info">
+            <div class="usuario-nombre">{{ usuario()?.usuarioNombre }}</div>
+            <div class="usuario-rol">{{ rolNombre() }}</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="contenido">
+      <router-outlet />
+    </div>
+  </div>
+</div>
