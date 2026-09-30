@@ -1,0 +1,68 @@
+<section class="cat-page hw-page">
+  <div class="franja">
+    <div>
+      <p>Catálogos</p>
+      <h1>Hardware</h1>
+      <span>
+        @if (loading) {
+          Cargando…
+        } @else {
+          {{ items.length }} equipo{{ items.length === 1 ? '' : 's' }} desde la base de datos
+        }
+      </span>
+    </div>
+  </div>
+
+  <app-catalogo-tabs />
+
+  @if (error) {
+    <p class="alert">{{ error }}</p>
+  }
+
+  <div class="tabla-wrap">
+    @if (loading) {
+      <p class="muted pad">Cargando hardware…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Hardware</th>
+            <th>Sistema operativo</th>
+            <th>Sistemas asociados</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.id) {
+            <tr>
+              <td class="muted">{{ item.id }}</td>
+              <td>
+                <strong class="nombre">{{ item.nombre }}</strong>
+              </td>
+              <td>
+                @if (item.so) {
+                  <span class="so">{{ item.so }}</span>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+              <td>
+                <div class="chips">
+                  @for (sistema of item.sistemas; track $index) {
+                    <span class="chip">{{ sistema }}</span>
+                  } @empty {
+                    <span class="muted">Sin sistemas</span>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="vacio">No hay hardware en la base de datos.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>

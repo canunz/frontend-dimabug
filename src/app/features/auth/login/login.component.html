@@ -20,7 +20,7 @@
         decoding="async"
       />
       <h1>Inicio de sesión</h1>
-      <p>Ingrese sus credenciales corporativas</p>
+      <p>Use el correo de la cuenta, no el usuario corto</p>
     </div>
 
     @if (error) {
@@ -31,7 +31,7 @@
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="login-field">
-        <label for="username">Usuario</label>
+        <label for="email">Correo</label>
         <div class="login-input" [class.is-invalid]="!!error">
           <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path
@@ -40,11 +40,12 @@
             />
           </svg>
           <input
-            id="username"
-            type="text"
-            formControlName="username"
-            placeholder="Usuario o correo institucional"
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="usuario@correo.cl"
             autocomplete="username"
+            [attr.aria-disabled]="loading"
           />
         </div>
       </div>
@@ -69,6 +70,7 @@
             type="button"
             class="toggle-pass"
             (click)="showPass = !showPass"
+            [disabled]="loading"
             [attr.aria-label]="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'"
           >
             @if (showPass) {
@@ -94,8 +96,19 @@
         <a routerLink="/recuperar" class="login-forgot">¿Olvidó su contraseña?</a>
       </div>
 
-      <button type="submit" class="login-submit" [disabled]="loading">
-        {{ loading ? 'Validando…' : 'Iniciar sesión' }}
+      <button
+        type="submit"
+        class="login-submit"
+        [class.is-loading]="loading"
+        [disabled]="loading"
+        [attr.aria-busy]="loading"
+      >
+        @if (loading) {
+          <span class="login-spinner" aria-hidden="true"></span>
+          Iniciando sesión…
+        } @else {
+          Iniciar sesión
+        }
       </button>
     </form>
   </div>

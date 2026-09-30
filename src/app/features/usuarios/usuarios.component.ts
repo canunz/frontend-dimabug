@@ -1,30 +1,50 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UsuarioService } from '../../core/services/usuario.service';
-import { Rol, Usuario } from '../../core/models/usuario.model';
+import { Rol, Usuario, esAdministrador, loginUsername } from '../../core/models/usuario.model';
+import { CatalogoTabsComponent } from '../../shared/ui/catalogo-tabs.component';
+import { LoadingModalComponent } from '../../shared/ui/loading-modal.component';
+
+type TonoConfirmacion = 'peligro' | 'aviso' | 'ok';
+
+interface Confirmacion {
+  titulo: string;
+  pregunta: string;
+  nombre: string;
+  nota?: string;
+  accion: string;
+  tono: TonoConfirmacion;
+  ejecutar: () => void;
+}
 
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, CatalogoTabsComponent, LoadingModalComponent],
   templateUrl: './usuarios.component.html',
   styleUrl: './usuarios.component.css',
 })
 export class UsuariosComponent implements OnInit {
   private readonly usuariosApi = inject(UsuarioService);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
   usuarios: Usuario[] = [];
   roles: Rol[] = [];
   loading = false;
   saving = false;
+  cambiandoEstado = false;
+  mensajeCarga = 'Guardando cambios…';
   error = '';
   success = '';
   modalOpen = false;
   editId: number | null = null;
+  private editOriginal: { nombre: string; email: string; rolId: number; activo: boolean } | null = null;
+  confirmacion: Confirmacion | null = null;
 
   form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
@@ -43,17 +63,43 @@ export class UsuariosComponent implements OnInit {
     return this.auth.usuario()?.usuarioId;
   }
 
-  cargar(): void {
-    this.loading = true;
+  get editandoCuentaActual(): boolean {
+    if (this.editId == null) {
+      return false;
+    }
+    return this.esCuentaActual({
+      usuarioId: this.editId,
+      usuarioEmail: this.form.controls.email.value || '',
+    });
+  }
+
+  esCuentaActual(u: Pick<Usuario, 'usuarioId' | 'usuarioEmail'>): boolean {
+    const yo = this.auth.usuario();
+    if (!yo) {
+      return false;
+    }
+    const mismoId = yo.usuarioId > 0 && u.usuarioId === yo.usuarioId;
+    const mismoCorreo =
+      !!yo.usuarioEmail &&
+      yo.usuarioEmail.trim().toLowerCase() === (u.usuarioEmail || '').trim().toLowerCase();
+    return mismoId || mismoCorreo;
+  }
+
+  cargar(force = false): void {
+    this.loading = !this.usuarios.length;
     this.error = '';
-    this.usuariosApi.listar().subscribe({
+    let first = true;
+    this.usuariosApi.listar(force).subscribe({
       next: (list) => {
         this.usuarios = list;
-        this.loading = false;
+        if (first) {
+          first = false;
+          this.loading = false;
+        }
       },
-      error: () => {
+      error: (err: Error) => {
         this.loading = false;
-        this.error = 'No se pudieron cargar los usuarios. Intente nuevamente.';
+        this.error = err.message || 'No se pudieron cargar los usuarios. Intente nuevamente.';
       },
     });
     this.usuariosApi.listarRoles().subscribe({
@@ -66,7 +112,9 @@ export class UsuariosComponent implements OnInit {
 
   openCreate(): void {
     this.editId = null;
+    this.editOriginal = null;
     this.error = '';
+    this.form.controls.email.enable({ emitEvent: false });
     this.form.reset({
       nombre: '',
       email: '',
@@ -82,6 +130,12 @@ export class UsuariosComponent implements OnInit {
 
   openEdit(u: Usuario): void {
     this.editId = u.usuarioId;
+    this.editOriginal = {
+      nombre: u.usuarioNombre,
+      email: u.usuarioEmail,
+      rolId: u.rolId || u.rol?.rolId || 0,
+      activo: u.usuarioEstado,
+    };
     this.error = '';
     this.form.reset({
       nombre: u.usuarioNombre,
@@ -93,6 +147,16 @@ export class UsuariosComponent implements OnInit {
     });
     this.form.controls.password1.clearValidators();
     this.form.controls.password1.updateValueAndValidity();
+    if (this.esCuentaActual(u)) {
+      this.form.controls.email.disable({ emitEvent: false });
+    } else {
+      this.form.controls.email.enable({ emitEvent: false });
+    }
+    this.form.controls.nombre.enable({ emitEvent: false });
+    this.form.controls.rolId.enable({ emitEvent: false });
+    this.form.controls.activo.enable({ emitEvent: false });
+    this.form.controls.password1.enable({ emitEvent: false });
+    this.form.controls.password2.enable({ emitEvent: false });
     this.modalOpen = true;
   }
 
@@ -119,14 +183,39 @@ export class UsuariosComponent implements OnInit {
       return;
     }
 
+    const original = this.editOriginal;
+    const correo = (original?.email || raw.email).trim();
+    const emailCambio =
+      !!original && raw.email.trim().toLowerCase() !== original.email.trim().toLowerCase();
+    const editandoActual =
+      this.editId != null &&
+      this.esCuentaActual({
+        usuarioId: this.editId,
+        usuarioEmail: correo,
+      });
+
     const payload = {
       usuarioNombre: raw.nombre.trim(),
-      usuarioEmail: raw.email.trim(),
+      usuarioEmail: emailCambio && !editandoActual ? raw.email.trim() : correo,
       rolId: Number(raw.rolId),
       usuarioEstado: !!raw.activo,
       usuarioPassword: raw.password1 || undefined,
     };
 
+    if (this.editId && original) {
+      const sinCambios =
+        payload.usuarioNombre === original.nombre.trim() &&
+        payload.usuarioEmail.trim().toLowerCase() === original.email.trim().toLowerCase() &&
+        payload.rolId === original.rolId &&
+        payload.usuarioEstado === original.activo &&
+        !payload.usuarioPassword;
+      if (sinCambios) {
+        this.modalOpen = false;
+        return;
+      }
+    }
+
+    this.mensajeCarga = 'Guardando cambios…';
     this.saving = true;
     const req$ = this.editId
       ? this.usuariosApi.actualizar(this.editId, payload)
@@ -136,8 +225,22 @@ export class UsuariosComponent implements OnInit {
       next: () => {
         this.saving = false;
         this.modalOpen = false;
+        if (editandoActual) {
+          const rol = this.roles.find((item) => item.rolId === payload.rolId);
+          this.auth.actualizarSesion({
+            usuarioNombre: payload.usuarioNombre,
+            usuarioEmail: payload.usuarioEmail,
+            rolId: payload.rolId,
+            rolNombre: rol?.rolNombre,
+            rol,
+          });
+          if (!esAdministrador(this.auth.usuario())) {
+            void this.router.navigateByUrl('/inicio');
+            return;
+          }
+        }
         this.success = this.editId ? 'Usuario actualizado.' : 'Usuario creado.';
-        this.cargar();
+        this.cargar(true);
       },
       error: (err) => {
         this.saving = false;
@@ -149,20 +252,40 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.confirmacion) {
+      this.cerrarConfirmacion();
+    }
+  }
+
   toggleEstado(u: Usuario): void {
-    if (u.usuarioId === this.currentUserId) {
+    if (this.esCuentaActual(u)) {
       return;
     }
     const next = !u.usuarioEstado;
-    const ok = confirm(
-      next
-        ? `¿Estás seguro de activar a ${u.usuarioNombre}?`
-        : `¿Estás seguro de inactivar a ${u.usuarioNombre}? No podrá iniciar sesión mientras esté inactivo.`,
-    );
-    if (!ok) {
-      return;
-    }
+    this.confirmacion = {
+      titulo: next ? 'Activar usuario' : 'Inactivar usuario',
+      pregunta: next ? '¿Estás seguro de activar a' : '¿Estás seguro de inactivar a',
+      nombre: u.usuarioNombre,
+      nota: next ? undefined : 'No podrá iniciar sesión mientras esté inactivo.',
+      accion: next ? 'Activar' : 'Inactivar',
+      tono: next ? 'ok' : 'aviso',
+      ejecutar: () => this.aplicarEstado(u, next),
+    };
+  }
 
+  aceptarConfirmacion(): void {
+    const accion = this.confirmacion?.ejecutar;
+    this.confirmacion = null;
+    accion?.();
+  }
+
+  cerrarConfirmacion(): void {
+    this.confirmacion = null;
+  }
+
+  private aplicarEstado(u: Usuario, next: boolean): void {
     const fallbackPut = () =>
       this.usuariosApi.actualizar(u.usuarioId, {
         usuarioNombre: u.usuarioNombre,
@@ -171,42 +294,37 @@ export class UsuariosComponent implements OnInit {
         usuarioEstado: next,
       });
 
+    this.mensajeCarga = next ? 'Activando usuario…' : 'Desactivando usuario…';
+    this.cambiandoEstado = true;
     this.usuariosApi.cambiarEstado(u.usuarioId, next).subscribe({
       next: () => {
+        this.cambiandoEstado = false;
         this.success = next ? `${u.usuarioNombre} quedó activo.` : `${u.usuarioNombre} quedó inactivo.`;
-        this.cargar();
+        this.cargar(true);
       },
       error: () => {
         fallbackPut().subscribe({
           next: () => {
+            this.cambiandoEstado = false;
             this.success = next
               ? `${u.usuarioNombre} quedó activo.`
               : `${u.usuarioNombre} quedó inactivo.`;
-            this.cargar();
+            this.cargar(true);
           },
-          error: () => (this.error = 'No se pudo cambiar el estado.'),
+          error: () => {
+            this.cambiandoEstado = false;
+            this.error = 'No se pudo cambiar el estado.';
+          },
         });
       },
     });
   }
 
-  eliminar(u: Usuario): void {
-    if (u.usuarioId === this.currentUserId) {
-      return;
-    }
-    if (!confirm(`¿Estás seguro de eliminar a ${u.usuarioNombre}? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-    this.usuariosApi.eliminar(u.usuarioId).subscribe({
-      next: () => {
-        this.success = `Usuario ${u.usuarioNombre} eliminado.`;
-        this.cargar();
-      },
-      error: () => (this.error = 'No se pudo eliminar el usuario.'),
-    });
-  }
-
   rolNombre(u: Usuario): string {
     return u.rol?.rolNombre || u.rolNombre || '—';
+  }
+
+  usuarioLogin(u: Usuario): string {
+    return loginUsername(u);
   }
 }

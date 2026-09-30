@@ -1,0 +1,94 @@
+<section class="kb form-page">
+  <app-loading-modal [visible]="saving" mensaje="Cargando, por favor…" />
+
+  <div class="franja">
+    <div>
+      <p>Conocimiento</p>
+      <h1>{{ esEdicion ? 'Editar conocimiento' : 'Nuevo conocimiento' }}</h1>
+      <span>{{ esEdicion ? 'Actualice los datos y guarde los cambios.' : 'El registro se creará como borrador.' }}</span>
+    </div>
+    <a routerLink="/conocimiento" class="btn-ghost">Volver al listado</a>
+  </div>
+
+  @if (error) {
+    <div class="alert">{{ error }}</div>
+  }
+
+  @if (loading) {
+    <p class="muted">Cargando…</p>
+  } @else if (!noDisponible) {
+    <form class="kb-form" [formGroup]="form" (ngSubmit)="guardar()">
+      <label class="full">
+        <span>Título <span class="req" aria-hidden="true">*</span></span>
+        <input type="text" formControlName="titulo" placeholder="Error WINDOW al ingresar a Bodega" />
+      </label>
+
+      <label class="full">
+        <span>Descripción <span class="req" aria-hidden="true">*</span></span>
+        <textarea formControlName="descripcion" rows="4" placeholder="Describa el problema o el contexto."></textarea>
+      </label>
+
+      <label>
+        Hardware
+        <select formControlName="hardwareId">
+          <option [ngValue]="null">Seleccione hardware</option>
+          @for (item of hardwares; track item.id) {
+            <option [ngValue]="item.id">{{ item.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Sistema
+        <select formControlName="sistemaId" [disabled]="!form.controls.hardwareId.value">
+          <option [ngValue]="null">Seleccione sistema</option>
+          @for (item of sistemas; track item.id) {
+            <option [ngValue]="item.id">{{ item.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Módulo
+        <select formControlName="moduloId" [disabled]="!form.controls.sistemaId.value">
+          <option [ngValue]="null">
+            {{
+              !form.controls.sistemaId.value
+                ? 'Seleccione módulo'
+                : modulos.length
+                  ? 'Seleccione módulo'
+                  : 'Sin módulos para este sistema'
+            }}
+          </option>
+          @for (item of modulos; track item.id) {
+            <option [ngValue]="item.id">{{ item.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Frecuencia
+        <select formControlName="frecuenciaId" [disabled]="!frecuenciasDisponibles">
+          <option [ngValue]="null">
+            {{ frecuenciasDisponibles ? 'Seleccione frecuencia' : 'No disponible' }}
+          </option>
+          @for (item of frecuencias; track item.id) {
+            <option [ngValue]="item.id">{{ item.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="full">
+        Comentario
+        <textarea formControlName="comentario" rows="3" placeholder="Notas internas (opcional)"></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button type="submit" [disabled]="saving">
+          {{ esEdicion ? 'Guardar cambios' : 'Guardar borrador' }}
+        </button>
+        <a routerLink="/conocimiento">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>

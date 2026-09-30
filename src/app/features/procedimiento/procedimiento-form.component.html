@@ -1,0 +1,37 @@
+<section class="formulario">
+  <p class="crumb">
+    <a routerLink="/procedimientos">Procedimientos</a>
+    <span>/</span>
+    {{ editId ? 'Editar' : 'Nuevo' }}
+  </p>
+
+  <h1>{{ editId ? 'Editar procedimiento' : 'Nuevo procedimiento' }}</h1>
+  <p class="ayuda">Queda en borrador. La publicación la hace un administrador desde el detalle.</p>
+
+  @if (loading) {
+    <p class="muted">Cargando…</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="guardar()">
+      <label>
+        Nombre <span class="req">*</span>
+        <input type="text" formControlName="nombre" maxlength="150" />
+        @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+          <span class="alerta">El nombre es obligatorio.</span>
+        }
+      </label>
+      <label>
+        Descripción
+        <textarea rows="4" formControlName="descripcion"></textarea>
+      </label>
+      @if (error) {
+        <p class="alerta">{{ error }}</p>
+      }
+      <div class="acciones">
+        <a routerLink="/procedimientos">Cancelar</a>
+        <button type="submit" [disabled]="guardando">
+          {{ guardando ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

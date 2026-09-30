@@ -1,0 +1,106 @@
+.pr-page .tabla-wrap {
+  border-radius: 18px;
+  border-color: #dce3f0;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.pr-page table {
+  min-width: 860px;
+  table-layout: auto;
+}
+
+.pr-page th {
+  background: #eef3fb;
+  color: #475569;
+  font-weight: 800;
+  padding: 14px 16px;
+}
+
+.pr-page td {
+  padding: 16px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.pr-page tbody tr:hover td {
+  background: #f8faff;
+}
+
+.pr-page .col-acciones {
+  width: 180px;
+}
+
+.pr-page .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pr-page .act {
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.pr-page .nombre {
+  display: block;
+  color: #0b1b4d;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.pr-page .resultado {
+  margin: 0;
+  max-width: 420px;
+  color: #475569;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.pr-page .estado {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pr-page .estado.activo {
+  background: #059669;
+  color: #fff;
+}
+
+.pr-page .estado.inactivo {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.pr-page .estado.inactivo {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.pr-page .pad {
+  margin: 0;
+  padding: 18px 16px;
+  color: #667085;
+}
+
+.alert {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b42318;
+  font-size: 13px;
+}
+
+:host-context(.tema-oscuro) .pr-page th {
+  background: #0b1220;
+}
+
+:host-context(.tema-oscuro) .pr-page tbody tr:hover td {
+  background: #0b1220;
+}
+
+:host-context(.tema-oscuro) .pr-page .nombre {
+  color: #f8fafc;
+}

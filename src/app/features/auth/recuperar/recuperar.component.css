@@ -1,6 +1,7 @@
 :host {
   display: block;
   min-height: 100vh;
+  animation: page-fade 0.35s ease-out;
 }
 
 .login-stage {

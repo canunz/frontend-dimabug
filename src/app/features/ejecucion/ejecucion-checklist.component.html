@@ -1,0 +1,121 @@
+<section class="checklist">
+  <p class="crumb">
+    <a routerLink="/ejecuciones">Mis ejecuciones</a>
+    <span>/</span>
+    Checklist
+  </p>
+
+  @if (loading) {
+    <p class="muted">Cargando ejecución…</p>
+  } @else if (error && !ejecucion) {
+    <p class="alerta">
+      {{ error }}
+      <a routerLink="/ejecuciones">Volver al listado</a>
+    </p>
+  } @else if (ejecucion) {
+    <header class="hero">
+      <div>
+        <span class="badge" [attr.data-estado]="ejecucion.estado">{{ etiquetaEstado(ejecucion.estado) }}</span>
+        <h1>{{ procedimiento?.nombre || ('Procedimiento ' + ejecucion.procedimientoId) }}</h1>
+        <p>
+          Inicio: {{ ejecucion.fechaInicio ? (ejecucion.fechaInicio | date: 'dd/MM/yyyy HH:mm') : '—' }}
+          @if (ejecucion.fechaFin) {
+            · Fin: {{ ejecucion.fechaFin | date: 'dd/MM/yyyy HH:mm' }}
+          }
+        </p>
+      </div>
+      <div class="progreso">
+        <strong>{{ cumplidos }} de {{ pasos.length }} pasos realizados</strong>
+        <span>{{ porcentaje }} %</span>
+        <div class="barra" aria-hidden="true"><i [style.width.%]="porcentaje"></i></div>
+      </div>
+    </header>
+
+    @if (error) {
+      <p class="alerta">{{ error }}</p>
+    }
+    @if (!enCurso) {
+      <p class="aviso">Esta ejecución está {{ etiquetaEstado(ejecucion.estado).toLowerCase() }} y no se puede modificar.</p>
+    }
+    @if (ejecucion.observaciones) {
+      <p class="aviso">Observación general: {{ ejecucion.observaciones }}</p>
+    }
+
+    @if (!pasos.length) {
+      <p class="muted">Esta ejecución no tiene pasos.</p>
+    } @else {
+      <ol>
+        @for (paso of pasos; track paso.ejecucionPasoId) {
+          <li [class.hecho]="paso.cumplido">
+            <label class="check">
+              <input
+                type="checkbox"
+                [checked]="paso.cumplido"
+                [disabled]="!enCurso || guardando != null || completando || cancelando"
+                (change)="marcar(paso, $any($event.target).checked)"
+              />
+              <span>
+                <strong>Paso {{ paso.orden }}</strong>
+                {{ paso.instruccion }}
+              </span>
+            </label>
+            @if (paso.esCritico) {
+              <em class="critico">Paso crítico</em>
+            }
+            <label class="nota">
+              Observación
+              <textarea
+                rows="2"
+                maxlength="300"
+                [name]="'obs-' + paso.ejecucionPasoId"
+                [(ngModel)]="borradores[paso.ejecucionPasoId]"
+                [disabled]="!enCurso || guardando != null"
+              ></textarea>
+              <span class="cuenta">{{ (borradores[paso.ejecucionPasoId] || '').length }} / 300</span>
+            </label>
+            @if (enCurso) {
+              <button
+                type="button"
+                class="guardar"
+                (click)="guardarObservacion(paso)"
+                [disabled]="guardando != null || (borradores[paso.ejecucionPasoId] || '').length > 300"
+              >
+                {{ guardando === paso.ejecucionPasoId ? 'Guardando…' : 'Guardar' }}
+              </button>
+            }
+          </li>
+        }
+      </ol>
+    }
+
+    @if (enCurso) {
+      <div class="acciones">
+        <button type="button" class="secundario" (click)="pedirCancelar()" [disabled]="cancelando || completando || guardando != null">
+          Cancelar ejecución
+        </button>
+        <button type="button" class="primario" (click)="completar()" [disabled]="!puedeCompletar || guardando != null || cancelando">
+          {{ completando ? 'Completando…' : 'Completar procedimiento' }}
+        </button>
+      </div>
+    }
+  }
+</section>
+
+@if (confirmarCancelacion) {
+  <div class="capa">
+    <div class="dialog" role="alertdialog" aria-modal="true">
+      <h2>¿Deseas cancelar esta ejecución?</h2>
+      <p>Los pasos registrados se conservarán.</p>
+      <label>
+        Observación general
+        <textarea rows="3" [(ngModel)]="motivoCancelacion" [disabled]="cancelando"></textarea>
+      </label>
+      <div class="acciones">
+        <button type="button" class="secundario" (click)="cerrarCancelar()" [disabled]="cancelando">Volver</button>
+        <button type="button" class="peligro" (click)="confirmarCancelar()" [disabled]="cancelando">
+          {{ cancelando ? 'Cancelando…' : 'Cancelar ejecución' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,65 @@
+<section class="cat-page">
+  <div class="franja">
+    <div>
+      <p>Operaciones</p>
+      <h1>Procedimientos</h1>
+      <span>Define los pasos del procedimiento. Un administrador lo publica.</span>
+    </div>
+    <div class="franja-acciones">
+      <a routerLink="/ejecuciones" class="btn-sec">Mis ejecuciones</a>
+      <a routerLink="/procedimientos/nuevo" class="btn-crear">+ Nuevo</a>
+    </div>
+  </div>
+
+  @if (error) {
+    <p class="muted pad">{{ error }}</p>
+  }
+
+  <div class="tabla-wrap">
+    @if (loading) {
+      <p class="muted pad">Cargando procedimientos…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th class="col-acciones">Acciones</th>
+            <th>Procedimiento</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.id) {
+            <tr>
+              <td>
+                <div class="acciones">
+                  <a class="act ver" [routerLink]="['/procedimientos', item.id]">Ver</a>
+                  <a class="act edit" [routerLink]="['/procedimientos', item.id, 'editar']">Editar</a>
+                  @if (esAdministrador() && item.estado === 'BORRADOR') {
+                    <button type="button" class="act ver" (click)="publicar(item)" [disabled]="publicandoId != null">
+                      {{ publicandoId === item.id ? 'Publicando…' : 'Publicar' }}
+                    </button>
+                  }
+                </div>
+              </td>
+              <td>
+                <strong>{{ item.nombre }}</strong>
+                @if (item.descripcion) {
+                  <span class="desc">{{ item.descripcion }}</span>
+                }
+              </td>
+              <td>
+                <span class="estado" [class.activo]="item.estado === 'PUBLICADO'" [class.warn]="item.estado === 'BORRADOR'">
+                  {{ item.estado === 'PUBLICADO' ? 'Publicado' : 'Borrador' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="vacio">No hay procedimientos para mostrar.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>

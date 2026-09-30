@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: '/api',
-  authFallback: false,
+  /** Host de producción (sin /api). Ejemplo: https://api.ejemplo.cl */
+  apiUrl: '',
 };

@@ -1,0 +1,217 @@
+@if (!puedeGestionar()) {
+  <section class="cat-page err-page usuario-error">
+    <div class="franja">
+      <div>
+        <p>Incidencias</p>
+        <h1>Nuevo error</h1>
+        <span>Cuéntanos qué está fallando. Soporte lo revisará junto con los casos parecidos.</span>
+      </div>
+    </div>
+
+    @if (success) {
+      <p class="ok">{{ success }}</p>
+    }
+
+    <form class="form-card usuario-form" [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-grid">
+        <label class="full">
+          Qué está fallando *
+          <textarea rows="4" formControlName="descripcion" placeholder="Describe el error con tus palabras"></textarea>
+          @if (form.controls.descripcion.touched && form.controls.descripcion.invalid) {
+            <small class="err">La descripción es obligatoria.</small>
+          }
+        </label>
+        <label>
+          Dónde ocurre
+          <input type="text" formControlName="modulo" placeholder="Caja, bodega, reportes..." />
+        </label>
+        <label>
+          Cada cuánto pasa
+          <select formControlName="frecuencia">
+            <option value="">No estoy seguro</option>
+            @for (f of frecuencias; track f) {
+              <option [value]="f">{{ f }}</option>
+            }
+          </select>
+        </label>
+        <label class="full">
+          Quién lo está viendo
+          <input type="text" formControlName="usuarioContexto" placeholder="Tu nombre, sucursal o usuario" />
+        </label>
+        <label class="full">
+          Qué más notaste
+          <textarea rows="3" formControlName="comentarios" placeholder="Mensaje en pantalla, hora, si ya lo intentaste de nuevo"></textarea>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-crear">Enviar error</button>
+      </div>
+    </form>
+  </section>
+} @else {
+<section class="cat-page err-page">
+  <div class="franja">
+    <div>
+      <p>Incidencias</p>
+      <h1>Errores</h1>
+      <span>{{ lista.length }} incidencia{{ lista.length === 1 ? '' : 's' }} registrada{{ lista.length === 1 ? '' : 's' }}</span>
+    </div>
+    <button type="button" class="btn-crear" (click)="abrirNuevo()">+ Añadir error</button>
+  </div>
+
+  <app-catalogo-tabs />
+
+  @if (success) {
+    <p class="ok">{{ success }}</p>
+  }
+
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-acciones">Acciones</th>
+          <th>Descripción</th>
+          <th>Hardware</th>
+          <th>Sistema</th>
+          <th>Frecuencia</th>
+          <th>Soluciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of lista; track item.id) {
+          <tr>
+            <td>
+              <div class="acciones">
+                <button type="button" class="act edit" (click)="abrirEditar(item)">Editar</button>
+                <button type="button" class="act del" (click)="eliminar(item)">Eliminar</button>
+              </div>
+            </td>
+            <td>
+              <strong class="nombre">{{ item.descripcion }}</strong>
+              @if (item.modulo) {
+                <span class="sub">{{ item.modulo }}</span>
+              }
+            </td>
+            <td>{{ nombreHardware(item.hardwareId) }}</td>
+            <td>{{ item.sistema || '—' }}</td>
+            <td>
+              @if (item.frecuencia) {
+                <span class="chip">{{ item.frecuencia }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>
+              <div class="chips">
+                @for (s of nombresSoluciones(item.solucionIds); track s) {
+                  <span class="chip sol">{{ s }}</span>
+                } @empty {
+                  <span class="muted">Sin soluciones</span>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="vacio">Aún no hay errores. Usa Añadir error para registrar el primero.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+@if (modalOpen) {
+  <div class="modal err-modal" role="dialog" aria-modal="true" aria-labelledby="error-modal-title">
+    <div class="modal-backdrop" aria-hidden="true"></div>
+    <div class="modal-dialog modal-pro modal-error">
+      <header class="modal-head">
+        <span class="modal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v8M8 12h8" />
+          </svg>
+        </span>
+        <div>
+          <p>Incidencias</p>
+          <h2 id="error-modal-title">{{ editId ? 'Editar error' : 'Nuevo error' }}</h2>
+          <span class="modal-lead">Describe la incidencia y su contexto operativo.</span>
+        </div>
+        <button type="button" class="cerrar" (click)="cerrarModal()" aria-label="Cerrar">✕</button>
+      </header>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="error-form">
+        <div class="form-scroll">
+          <section class="form-section">
+            <h3>Datos del caso</h3>
+            <div class="form-grid">
+              <label class="full">
+                Descripción *
+                <textarea rows="3" formControlName="descripcion" placeholder="¿Qué está fallando?"></textarea>
+                @if (form.controls.descripcion.touched && form.controls.descripcion.invalid) {
+                  <small class="err">La descripción es obligatoria.</small>
+                }
+              </label>
+
+              <label>
+                Hardware
+                <select formControlName="hardwareId">
+                  <option [ngValue]="0">Sin hardware</option>
+                  @for (h of hardware; track h.id) {
+                    <option [ngValue]="h.id">{{ h.nombre }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                Sistema
+                <select formControlName="sistema">
+                  <option value="">Sin sistema</option>
+                  @for (s of sistemas; track s) {
+                    <option [value]="s">{{ s }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                Módulo
+                <input type="text" formControlName="modulo" placeholder="Caja, reportes, inventario..." />
+              </label>
+
+              <label>
+                Frecuencia
+                <select formControlName="frecuencia">
+                  <option value="">Sin frecuencia</option>
+                  @for (f of frecuencias; track f) {
+                    <option [value]="f">{{ f }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="full">
+                Usuario (contexto)
+                <input type="text" formControlName="usuarioContexto" placeholder="Quién reporta o en qué cuenta ocurre" />
+              </label>
+
+              <label class="full">
+                Causa del problema
+                <textarea rows="2" formControlName="causa" placeholder="Qué lo provoca, si ya se conoce"></textarea>
+              </label>
+
+              <label class="full">
+                Comentarios
+                <textarea rows="2" formControlName="comentarios" placeholder="Observaciones del técnico o del usuario"></textarea>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <footer class="form-actions">
+          <button type="button" class="btn-sec" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-crear">Guardar error</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}
+}

@@ -1,0 +1,76 @@
+<section class="cat-page dep-page">
+  <div class="franja">
+    <div>
+      <p>Catálogos</p>
+      <h1>Departamentos</h1>
+      <span>
+        @if (loading) {
+          Cargando…
+        } @else {
+          {{ items.length }} departamento{{ items.length === 1 ? '' : 's' }} desde la base de datos
+        }
+      </span>
+    </div>
+  </div>
+
+  <app-catalogo-tabs />
+
+  @if (error) {
+    <p class="alert">{{ error }}</p>
+  }
+
+  <div class="tabla-wrap">
+    @if (loading) {
+      <p class="muted pad">Cargando departamentos…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Departamento</th>
+            <th>Contactos</th>
+            <th>Responsables</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.id) {
+            <tr>
+              <td class="muted">{{ item.id }}</td>
+              <td><strong class="nombre">{{ item.nombre }}</strong></td>
+              <td>
+                <div class="chips">
+                  @for (c of item.contactos; track c.numero) {
+                    @if (c.activo) {
+                      <span class="chip">{{ c.tipo }}: {{ c.numero }}</span>
+                    }
+                  } @empty {
+                    <span class="muted">Sin contactos</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <div class="chips">
+                  @for (r of item.responsables; track r) {
+                    <span class="chip">{{ r }}</span>
+                  } @empty {
+                    <span class="muted">Sin responsables</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="estado" [class.activo]="item.activo" [class.inactivo]="!item.activo">
+                  {{ item.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="vacio">No hay departamentos en la base de datos.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>

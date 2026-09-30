@@ -1,0 +1,57 @@
+<section class="cat-page">
+  <div class="franja">
+    <div>
+      <p>Operaciones</p>
+      <h1>Mis ejecuciones</h1>
+      <span>Historial de procedimientos que has iniciado, completado o cancelado.</span>
+    </div>
+    <a routerLink="/procedimientos" class="btn-crear">Ver procedimientos</a>
+  </div>
+
+  @if (error) {
+    <p class="muted pad">{{ error }}</p>
+  }
+
+  <div class="tabla-wrap">
+    @if (loading) {
+      <p class="muted pad">Cargando ejecuciones…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th class="col-acciones">Acciones</th>
+            <th>Procedimiento</th>
+            <th>Estado</th>
+            <th>Inicio</th>
+            <th>Fin</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.id) {
+            <tr>
+              <td>
+                <a class="act ver" [routerLink]="['/ejecuciones', item.id]">Ver</a>
+              </td>
+              <td><strong>{{ nombre(item.procedimientoId) }}</strong></td>
+              <td>
+                <span
+                  class="estado"
+                  [class.activo]="item.estado === 'COMPLETADA'"
+                  [class.warn]="item.estado === 'EN_CURSO'"
+                >
+                  {{ etiqueta(item.estado) }}
+                </span>
+              </td>
+              <td>{{ item.fechaInicio ? (item.fechaInicio | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
+              <td>{{ item.fechaFin ? (item.fechaFin | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="vacio">No hay ejecuciones para mostrar.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>

@@ -1,0 +1,241 @@
+/* Ajustes locales encima de catalogo-page.css */
+.sol-page .toolbar {
+  margin: 0 0 14px;
+}
+
+.modal-alert {
+  margin: 16px 22px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.sol-page .form-grid textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.sol-page .search {
+  display: block;
+}
+
+.sol-page .search input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #d8deea;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.sol-page .search input:focus {
+  outline: 2px solid rgba(30, 79, 214, 0.25);
+  border-color: #1e4fd6;
+}
+
+.sol-page .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.sol-page .tabla-wrap {
+  border-radius: 18px;
+  border-color: #dce3f0;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.sol-page table {
+  min-width: 920px;
+  table-layout: auto;
+}
+
+.sol-page th {
+  background: #eef3fb;
+  color: #475569;
+  font-weight: 800;
+  padding: 14px 16px;
+}
+
+.sol-page td {
+  padding: 16px;
+  color: #334155;
+  vertical-align: top;
+}
+
+.sol-page tbody tr:hover td {
+  background: #f8faff;
+}
+
+.sol-page .guia-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sol-page .guia-acciones .btn-sec {
+  height: 36px;
+}
+
+.sol-page .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sol-page .act {
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.sol-page .act.edit {
+  background: #eaf0fe;
+  color: #0e2266;
+}
+
+.sol-page .act.del {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.sol-page .nombre {
+  display: block;
+  color: #0b1b4d;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.sol-page .pasos {
+  margin: 0;
+  max-width: 360px;
+  color: #475569;
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.sol-page .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sol-page .chip {
+  margin: 0;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.sol-page .chip.anexo {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #1e3a8a;
+}
+
+.sol-page .link-kb {
+  color: #1e4fd6;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.sol-page .link-kb:hover {
+  text-decoration: underline;
+}
+
+.sol-page .tipo-pill {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #eaf0fe;
+  color: #0e2266;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sol-page .btn-kb {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 280px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #1e4fd6;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(30, 79, 214, 0.28);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.sol-page .btn-kb small {
+  color: #dbe7ff;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.sol-page .btn-kb:hover {
+  background: #1638a8;
+  transform: translateY(-1px);
+}
+
+.sol-page .pad {
+  margin: 0;
+  padding: 18px 16px;
+}
+
+.sol-page .alert {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.sol-page .muted {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sol-page .muted {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+:host-context(.tema-oscuro) .sol-page .search input {
+  background: #111827;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+:host-context(.tema-oscuro) .sol-page th {
+  background: #0b1220;
+}
+
+:host-context(.tema-oscuro) .sol-page tbody tr:hover td {
+  background: #0b1220;
+}
+
+:host-context(.tema-oscuro) .sol-page .nombre {
+  color: #f8fafc;
+}

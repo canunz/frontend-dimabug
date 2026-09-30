@@ -1,0 +1,160 @@
+<app-loading-modal [visible]="eliminando" mensaje="Eliminando, por favor…" />
+
+<section class="kb">
+  <header class="franja">
+    <div>
+      <p class="kicker">{{ puedeGestionar() ? 'Soporte' : 'Consulta' }}</p>
+      <h1>Conocimiento</h1>
+      <p>
+        @if (puedeGestionar()) {
+          Consulta y gestiona las guías de diagnóstico y solución.
+        } @else {
+          Busca un caso parecido al tuyo y márcalo con la estrella para volver después.
+        }
+      </p>
+    </div>
+    @if (puedeGestionar()) {
+      <a routerLink="/conocimiento/nuevo" class="btn-crear">+ Nuevo</a>
+    }
+  </header>
+
+  <form class="filtros" (ngSubmit)="buscar()">
+    <input
+      type="search"
+      [(ngModel)]="texto"
+      name="texto"
+      placeholder="Buscar por título, síntoma, causa, prueba o solución…"
+      autocomplete="off"
+    />
+    <select [(ngModel)]="hardwareId" name="hardware" aria-label="Hardware" (ngModelChange)="onHardwareChange()">
+      <option [ngValue]="null">Todo el hardware</option>
+      @for (item of hardwares; track item.id) {
+        <option [ngValue]="item.id">{{ item.nombre }}</option>
+      }
+    </select>
+    <select [(ngModel)]="sistemaId" name="sistema" aria-label="Sistema" (ngModelChange)="onSistemaChange()">
+      <option [ngValue]="null">Todos los sistemas</option>
+      @for (item of sistemas; track item.id) {
+        <option [ngValue]="item.id">{{ item.nombre }}</option>
+      }
+    </select>
+    <select [(ngModel)]="moduloId" name="modulo" aria-label="Módulo" [disabled]="!sistemaId">
+      <option [ngValue]="null">Todos los módulos</option>
+      @for (item of modulos; track item.id) {
+        <option [ngValue]="item.id">{{ item.nombre }}</option>
+      }
+    </select>
+    <select [(ngModel)]="frecuenciaId" name="frecuencia" aria-label="Frecuencia">
+      <option [ngValue]="null">Todas las frecuencias</option>
+      @for (item of frecuencias; track item.id) {
+        <option [ngValue]="item.id">{{ item.nombre }}</option>
+      }
+    </select>
+    <div class="filtros-acciones">
+      <button type="submit" class="btn-buscar" [disabled]="loading">
+        {{ loading ? 'Buscando…' : 'Buscar' }}
+      </button>
+      <button type="button" class="btn-limpiar" (click)="limpiar()" [disabled]="loading">Limpiar filtros</button>
+    </div>
+  </form>
+
+  @if (error) {
+    <p class="alert">{{ error }}</p>
+  }
+  @if (aviso) {
+    <p class="alert ok">{{ aviso }}</p>
+  }
+
+  <div class="meta">
+    <h2>Resultados</h2>
+    @if (loading) {
+      <span>Buscando…</span>
+    } @else if (buscado) {
+      <span>{{ resultados.length }} resultado{{ resultados.length === 1 ? '' : 's' }}</span>
+    }
+  </div>
+
+  <div class="tabla-wrap">
+    @if (loading && !resultados.length) {
+      <p class="muted">Buscando conocimientos…</p>
+    } @else if (!buscado) {
+      <p class="muted">Escribe un término o elige un filtro y pulsa Buscar.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th class="col-acciones">Acciones</th>
+            <th>Título</th>
+            <th>Hardware</th>
+            <th>Sistema</th>
+            <th>Frecuencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of resultados; track item.id) {
+            <tr class="clickable" (click)="abrir(item)">
+              <td (click)="$event.stopPropagation()">
+                <div class="acciones">
+                  <button type="button" class="btn-accion ver" title="Ver conocimiento" (click)="abrir(item)">
+                    Ver
+                  </button>
+                  @if (puedeGestionar()) {
+                    <button type="button" class="btn-accion editar" title="Editar conocimiento" (click)="editar(item, $event)">
+                      Editar
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="btn-accion fav"
+                    [class.on]="esFavorito(item.id)"
+                    [title]="esFavorito(item.id) ? 'Quitar favorito' : 'Agregar a favoritos'"
+                    (click)="toggleFavorito(item.id, item.titulo, $event)"
+                  >
+                    {{ esFavorito(item.id) ? '★ Favorito' : '☆ Favorito' }}
+                  </button>
+                  @if (esAdministrador()) {
+                    <button
+                      type="button"
+                      class="btn-accion eliminar"
+                      title="Eliminar conocimiento"
+                      [disabled]="eliminando"
+                      (click)="pedirEliminar(item, $event)"
+                    >
+                      Eliminar
+                    </button>
+                  }
+                </div>
+              </td>
+              <td>
+                <strong>{{ item.titulo }}</strong>
+              </td>
+              <td>{{ item.hardwareNombre || '—' }}</td>
+              <td>{{ item.sistemaNombre || '—' }}</td>
+              <td>{{ item.frecuenciaNombre || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="vacio">No encontramos conocimientos que coincidan con tu búsqueda.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>
+
+@if (pendienteEliminar) {
+  <div class="confirm-capa">
+    <div class="confirm-fondo" (click)="cancelarEliminar()"></div>
+    <div class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="eliminar-titulo">
+      <h2 id="eliminar-titulo">¿Eliminar este conocimiento?</h2>
+      <p>El conocimiento dejará de estar disponible para consulta y búsqueda.</p>
+      <div class="confirm-acciones">
+        <button type="button" class="btn-cancelar" (click)="cancelarEliminar()" [disabled]="eliminando">Cancelar</button>
+        <button type="button" class="btn-peligro" (click)="confirmarEliminar()" [disabled]="eliminando">
+          {{ eliminando ? 'Eliminando…' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

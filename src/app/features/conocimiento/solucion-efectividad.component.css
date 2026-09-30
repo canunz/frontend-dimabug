@@ -1,0 +1,249 @@
+.efectividad {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e8eef8;
+}
+
+.efectividad-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.efectividad h3,
+.pregunta {
+  margin: 0;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.pregunta {
+  margin-top: 12px;
+  font-weight: 700;
+}
+
+.estado,
+.sin {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.cifras div {
+  padding: 8px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e8eef8;
+}
+
+.cifras dt {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cifras dd {
+  margin: 2px 0 0;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.acciones,
+.registro-acciones,
+.eleccion,
+.historial-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.acciones {
+  margin-top: 8px;
+}
+
+.voto,
+.registro-acciones button,
+.link {
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.voto,
+.registro-acciones button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  padding: 7px 12px;
+}
+
+.voto.si {
+  border-color: #86efac;
+}
+
+.voto.no {
+  border-color: #fca5a5;
+}
+
+.voto:disabled,
+.registro-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.link {
+  border: 0;
+  background: transparent;
+  color: #1e4fd6;
+  padding: 7px 4px;
+}
+
+.ok,
+.alerta {
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
+.ok {
+  color: #047857;
+}
+
+.alerta {
+  color: #b42318;
+}
+
+.registro {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e8eef8;
+}
+
+.registro fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.registro legend {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.comentario {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.comentario textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 500;
+  resize: vertical;
+}
+
+.cuenta {
+  justify-self: end;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cuenta.limite {
+  color: #b42318;
+}
+
+.registro-acciones {
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.registro-acciones button[type='submit'] {
+  background: #1e4fd6;
+  border-color: #1e4fd6;
+  color: #fff;
+}
+
+.historial {
+  margin-top: 12px;
+}
+
+.historial ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.historial li {
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e8eef8;
+}
+
+.historial-top strong {
+  color: #0f172a;
+}
+
+.historial-top span,
+.historial time {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.historial p {
+  margin: 6px 0 0;
+  color: #334155;
+  font-size: 13.5px;
+}
+
+@media (max-width: 700px) {
+  .cifras {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+:host-context(.tema-oscuro) .efectividad,
+:host-context(.tema-oscuro) .cifras div,
+:host-context(.tema-oscuro) .registro,
+:host-context(.tema-oscuro) .historial li,
+:host-context(.tema-oscuro) .voto,
+:host-context(.tema-oscuro) .registro-acciones button {
+  background: #0f172a;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+:host-context(.tema-oscuro) .efectividad h3,
+:host-context(.tema-oscuro) .pregunta,
+:host-context(.tema-oscuro) .cifras dd,
+:host-context(.tema-oscuro) .registro legend,
+:host-context(.tema-oscuro) .historial-top strong {
+  color: #f8fafc;
+}

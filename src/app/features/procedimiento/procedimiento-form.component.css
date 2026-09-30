@@ -1,0 +1,92 @@
+.formulario {
+  max-width: 720px;
+}
+
+.crumb {
+  margin: 0 0 14px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.crumb a,
+.acciones a {
+  color: #1e4fd6;
+  text-decoration: none;
+}
+
+h1 {
+  margin: 0 0 6px;
+}
+
+.ayuda,
+.muted {
+  color: #64748b;
+}
+
+form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.req {
+  color: #b42318;
+}
+
+input,
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 500;
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #1e4fd6;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.alerta {
+  margin: 0;
+  color: #b42318;
+}
+
+:host-context(.tema-oscuro) label,
+:host-context(.tema-oscuro) h1 {
+  color: #f8fafc;
+}
+
+:host-context(.tema-oscuro) input,
+:host-context(.tema-oscuro) textarea {
+  background: #0f172a;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}

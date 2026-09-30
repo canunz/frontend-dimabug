@@ -1,0 +1,56 @@
+<section class="cat-page pr-page">
+  <div class="franja">
+    <div>
+      <p>Catálogos</p>
+      <h1>{{ titulo }}</h1>
+      <span>
+        @if (loading) {
+          Cargando…
+        } @else {
+          {{ items.length }} {{ titulo === 'Procedimientos' ? 'procedimiento' : 'prueba' }}{{ items.length === 1 ? '' : 's' }} desde la base de datos
+        }
+      </span>
+    </div>
+  </div>
+
+  <app-catalogo-tabs />
+
+  @if (error) {
+    <p class="alert">{{ error }}</p>
+  }
+
+  <div class="tabla-wrap">
+    @if (loading) {
+      <p class="muted pad">Cargando…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ titulo === 'Procedimientos' ? 'Procedimiento' : 'Prueba' }}</th>
+            <th>Resultado esperado</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.id) {
+            <tr>
+              <td class="muted">{{ item.id }}</td>
+              <td><strong class="nombre">{{ item.descripcion }}</strong></td>
+              <td><p class="resultado">{{ item.resultadoEsperado || '—' }}</p></td>
+              <td>
+                <span class="estado" [class.activo]="item.activo" [class.inactivo]="!item.activo">
+                  {{ item.activo ? 'Activa' : 'Inactiva' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="vacio">No hay registros en la base de datos.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>

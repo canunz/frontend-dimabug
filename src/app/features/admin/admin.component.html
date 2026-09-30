@@ -1,0 +1,91 @@
+<section class="admin">
+  <header class="hero">
+    <div>
+      <p>Sitio administrativo</p>
+      <h1>Administración DimaBug</h1>
+      <span>Gestiona catálogos y accesos. Acciones a la izquierda, detalle a la derecha.</span>
+    </div>
+  </header>
+
+  <app-catalogo-tabs />
+
+  <div class="panel">
+    <nav class="tabs" aria-label="Secciones del administrador">
+      <button type="button" [class.on]="tab() === 'todos'" (click)="setTab('todos')">Todos</button>
+      @for (item of tabs; track item.id) {
+        <button type="button" [class.on]="tab() === item.id" (click)="setTab(item.id)">
+          {{ item.label }}
+        </button>
+      }
+    </nav>
+
+    @if (tab() === 'recientes') {
+      <section class="tabla-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-acciones">Acciones</th>
+              <th>Actividad</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (accion of acciones; track accion.fecha + accion.texto) {
+              <tr>
+                <td>
+                  <div class="acts">
+                    <a class="mod" [routerLink]="accion.ruta">Abrir</a>
+                  </div>
+                </td>
+                <td><strong>{{ accion.texto }}</strong></td>
+                <td class="fecha">{{ accion.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="empty">Ninguna actividad reciente.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    } @else {
+      <section class="tabla-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-acciones">Acciones</th>
+              <th>Modelo</th>
+              <th>Descripción</th>
+              <th>Grupo</th>
+              <th class="num">Registros</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of visibles(); track item.nombre) {
+              <tr>
+                <td>
+                  <div class="acts">
+                    <a class="add" [routerLink]="item.anadir" (click)="marcar('Añadió ' + item.nombre, item.anadir)">
+                      Añadir
+                    </a>
+                    <a class="mod" [routerLink]="item.listar" (click)="marcar('Modificó ' + item.nombre, item.listar)">
+                      Ver
+                    </a>
+                  </div>
+                </td>
+                <td><strong>{{ item.nombre }}</strong></td>
+                <td class="desc">{{ item.descripcion }}</td>
+                <td>
+                  <span class="grupo-pill" [class.auth]="item.grupo === 'auth'">
+                    {{ item.grupo === 'auth' ? 'Autenticación' : 'Buscador' }}
+                  </span>
+                </td>
+                <td class="num">{{ item.count }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+  </div>
+</section>

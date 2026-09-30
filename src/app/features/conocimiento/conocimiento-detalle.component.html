@@ -1,0 +1,531 @@
+<app-loading-modal [visible]="mostrandoCarga" [mensaje]="mensajeCarga" />
+
+@if (loading && !item) {
+  <div class="detail">
+    <div class="hero skeleton-hero">
+      <div class="sk title"></div>
+      <div class="sk"></div>
+      <div class="sk short"></div>
+    </div>
+    <div class="skeleton-stack page"><div class="sk tall"></div><div class="sk tall"></div></div>
+  </div>
+} @else if (error && !item) {
+  <p class="missing">
+    {{ error }}
+    <a routerLink="/conocimiento">Volver al listado</a>
+    <a routerLink="/inicio">Ir al buscador</a>
+  </p>
+} @else if (item) {
+  @let kb = item;
+  <article class="detail">
+    <p class="crumb">
+      <a routerLink="/conocimiento">Conocimiento</a>
+      <span>/</span>
+      Guía de resolución
+    </p>
+
+    @if (error) {
+      <p class="alert error">{{ error }}</p>
+    }
+    @if (sectionError) {
+      <p class="alert error">{{ sectionError }}</p>
+    }
+    @if (sectionSuccess) {
+      <p class="alert success">{{ sectionSuccess }}</p>
+    }
+
+    <header class="hero">
+      <div class="hero-main">
+        <div class="hero-top">
+          <span
+            class="badge"
+            [class.publicado]="kb.estado === 'PUBLICADO'"
+            [class.borrador]="kb.estado === 'BORRADOR'"
+            [class.eliminado]="kb.estado === 'ELIMINADO'"
+          >
+            {{ etiquetaEstado(kb.estado) }}
+          </span>
+          @if (kb.frecuenciaNombre) {
+            <span class="freq">{{ kb.frecuenciaNombre }}</span>
+          }
+        </div>
+        <h1>{{ kb.titulo }}</h1>
+        <p class="lead">{{ kb.descripcion || 'Sin descripción disponible.' }}</p>
+        <dl class="meta-grid">
+          <div>
+            <dt>Hardware</dt>
+            <dd>{{ kb.hardwareNombre || 'Sin clasificar' }}</dd>
+          </div>
+          <div>
+            <dt>Sistema</dt>
+            <dd>{{ kb.sistemaNombre || 'Sin clasificar' }}</dd>
+          </div>
+          <div>
+            <dt>Módulo</dt>
+            <dd>{{ kb.moduloNombre || 'Sin clasificar' }}</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="hero-actions">
+        <button type="button" class="star" [class.on]="favorito" (click)="toggleFavorito()">
+          {{ favorito ? '★ En favoritos' : '☆ Guardar favorito' }}
+        </button>
+        @if (puedeGestionar()) {
+          <button type="button" class="hero-btn" (click)="editar()">Editar ficha</button>
+          @if (kb.estado === 'BORRADOR') {
+            <button type="button" class="hero-btn publish" (click)="cambiarEstado('PUBLICADO')" [disabled]="publishing">
+              {{ publishing ? 'Publicando…' : 'Publicar' }}
+            </button>
+          } @else if (kb.estado === 'PUBLICADO') {
+            <button type="button" class="hero-btn" (click)="cambiarEstado('BORRADOR')" [disabled]="publishing">
+              {{ publishing ? 'Guardando…' : 'Volver a borrador' }}
+            </button>
+          }
+        }
+        @if (esAdministrador()) {
+          <button type="button" class="hero-btn eliminar" (click)="pedirEliminar()" [disabled]="eliminando">
+            Eliminar
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (puedeGestionar() && kb.comentario) {
+      <aside class="nota">
+        <strong>Nota del equipo</strong>
+        <p>{{ kb.comentario }}</p>
+      </aside>
+    }
+
+    <div class="layout">
+      <div class="main-col">
+        <section class="guide">
+          <header class="guide-head">
+            <div>
+              <p class="step-label">Paso 1 · Observar</p>
+              <h2>Qué está viendo el usuario</h2>
+              <p class="hint">Confirme estos síntomas antes de continuar.</p>
+            </div>
+            @if (puedeGestionar()) {
+              <button type="button" class="add-btn" (click)="abrirFormulario('sintomas')">+ Síntoma</button>
+            }
+          </header>
+
+          @if (loadingSintomas) {
+            <div class="skeleton-stack"><div class="sk"></div><div class="sk"></div></div>
+          } @else if (sintomas.length) {
+            <ol class="checklist">
+              @for (s of sintomas; track s.id) {
+                <li>
+                  <span class="num">{{ s.orden }}</span>
+                  <p>{{ s.descripcion }}</p>
+                  @if (puedeGestionar()) {
+                    <button type="button" class="edit-btn" (click)="editarSintoma(s)">Editar</button>
+                  }
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="empty-state">
+              {{ puedeGestionar() ? 'Todavía no hay síntomas. Agréguelos para que el técnico sepa qué validar en terreno.' : 'Todavía no hay síntomas registrados para este caso.' }}
+            </p>
+          }
+
+          @if (puedeGestionar() && formAbierto.sintomas) {
+            <form class="editor" [formGroup]="sintomaForm" (ngSubmit)="guardarSintoma()">
+              <label>
+                <span>Descripción del síntoma <span class="req">*</span></span>
+                <input type="text" formControlName="descripcion" placeholder="Ej: aparece mensaje WINDOW al abrir Bodega" />
+              </label>
+              <label class="orden">
+                <span>Orden <span class="req">*</span></span>
+                <input type="number" formControlName="orden" min="1" />
+              </label>
+              <div class="editor-actions">
+                <button type="submit" [disabled]="saving === 'sintomas'">
+                  {{ editSintomaId ? 'Guardar cambios' : 'Agregar síntoma' }}
+                </button>
+                <button type="button" class="ghost-mini" (click)="cerrarFormulario('sintomas')">Cancelar</button>
+              </div>
+            </form>
+          }
+        </section>
+
+        <section class="guide warn">
+          <header class="guide-head">
+            <div>
+              <p class="step-label">Paso 2 · Diagnosticar</p>
+              <h2>Causas probables</h2>
+              <p class="hint">Revise en este orden para acotar el origen del problema.</p>
+            </div>
+            @if (puedeGestionar()) {
+              <button type="button" class="add-btn" (click)="abrirFormulario('causas')">+ Causa</button>
+            }
+          </header>
+
+          @if (loadingCausas) {
+            <div class="skeleton-stack"><div class="sk"></div><div class="sk short"></div></div>
+          } @else if (causas.length) {
+            <ol class="checklist">
+              @for (c of causas; track c.id) {
+                <li>
+                  <span class="num">{{ c.orden }}</span>
+                  <p>{{ c.descripcion }}</p>
+                  @if (puedeGestionar()) {
+                    <button type="button" class="edit-btn" (click)="editarCausa(c)">Editar</button>
+                  }
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="empty-state">
+              {{ puedeGestionar() ? 'Sin causas registradas. Documente aquí las hipótesis más frecuentes.' : 'Sin causas registradas para este caso.' }}
+            </p>
+          }
+
+          @if (puedeGestionar() && formAbierto.causas) {
+            <form class="editor" [formGroup]="causaForm" (ngSubmit)="guardarCausa()">
+              <label>
+                <span>Descripción de la causa <span class="req">*</span></span>
+                <input type="text" formControlName="descripcion" placeholder="Ej: archivo WINDOW desactualizado" />
+              </label>
+              <label class="orden">
+                <span>Orden <span class="req">*</span></span>
+                <input type="number" formControlName="orden" min="1" />
+              </label>
+              <div class="editor-actions">
+                <button type="submit" [disabled]="saving === 'causas'">
+                  {{ editCausaId ? 'Guardar cambios' : 'Agregar causa' }}
+                </button>
+                <button type="button" class="ghost-mini" (click)="cerrarFormulario('causas')">Cancelar</button>
+              </div>
+            </form>
+          }
+        </section>
+
+        <section class="guide">
+          <header class="guide-head">
+            <div>
+              <p class="step-label">Paso 3 · Verificar</p>
+              <h2>Pruebas recomendadas</h2>
+              <p class="hint">Ejecute estas pruebas y compare con el resultado esperado.</p>
+            </div>
+            @if (puedeGestionar()) {
+              <button type="button" class="add-btn" (click)="abrirFormulario('pruebas')">+ Asociar prueba</button>
+            }
+          </header>
+
+          @if (loadingPruebas) {
+            <div class="skeleton-stack"><div class="sk"></div><div class="sk"></div></div>
+          } @else if (pruebas.length) {
+            <ol class="tests">
+              @for (p of pruebas; track p.id) {
+                <li>
+                  <div class="test-top">
+                    <span class="num">{{ p.orden }}</span>
+                    <strong>{{ p.descripcion }}</strong>
+                    @if (puedeGestionar()) {
+                      <button type="button" class="edit-btn" (click)="editarPrueba(p)">Orden</button>
+                    }
+                  </div>
+                  <p class="expected"><span>Resultado esperado</span>{{ p.resultadoEsperado || 'No indicado' }}</p>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="empty-state">
+              {{ puedeGestionar() ? 'No hay pruebas asociadas. Vincule pruebas del catálogo para guiar la verificación.' : 'No hay pruebas asociadas a este caso.' }}
+            </p>
+          }
+
+          @if (puedeGestionar() && formAbierto.pruebas) {
+            <form class="editor" [formGroup]="pruebaForm" (ngSubmit)="guardarPrueba()">
+              @if (!editPruebaId) {
+                <label>
+                  <span>Prueba del catálogo <span class="req">*</span></span>
+                  <select formControlName="pruebaId">
+                    <option [ngValue]="null">Seleccione una prueba existente</option>
+                    @for (p of pruebasCatalogo; track p.id) {
+                      <option [ngValue]="p.id">{{ p.descripcion }}</option>
+                    }
+                  </select>
+                </label>
+              }
+              <label class="orden">
+                <span>Orden <span class="req">*</span></span>
+                <input type="number" formControlName="orden" min="1" />
+              </label>
+              <div class="editor-actions">
+                <button type="submit" [disabled]="saving === 'pruebas'">
+                  {{ editPruebaId ? 'Actualizar orden' : 'Asociar prueba' }}
+                </button>
+                <button type="button" class="ghost-mini" (click)="cerrarFormulario('pruebas')">Cancelar</button>
+              </div>
+              <small>Las pruebas se reutilizan desde el catálogo; aquí solo se asocian a este conocimiento.</small>
+            </form>
+          }
+        </section>
+
+        <section class="guide ok">
+          <header class="guide-head">
+            <div>
+              <p class="step-label">Paso 4 · Resolver</p>
+              <h2>Solución</h2>
+              <p class="hint">Siga estos pasos o derive al área indicada.</p>
+            </div>
+            @if (puedeGestionar()) {
+              <button type="button" class="add-btn" (click)="abrirFormulario('soluciones')">+ Solución</button>
+            }
+          </header>
+
+          @if (loadingSoluciones) {
+            <div class="skeleton-stack"><div class="sk tall"></div><div class="sk"></div></div>
+          } @else if (soluciones.length) {
+            @for (s of soluciones; track s.id) {
+              <article class="solution">
+                <div class="solution-top">
+                  <span class="num">{{ s.orden }}</span>
+                  <div>
+                    <strong>{{ s.descripcion }}</strong>
+                    <span class="tipo" [class.derivacion]="s.tipo === 'DERIVACION'">
+                      {{ s.tipo === 'DERIVACION' ? 'Derivación' : 'Pasos a seguir' }}
+                    </span>
+                  </div>
+                  @if (puedeGestionar()) {
+                    <div class="solution-actions">
+                      <button type="button" class="edit-btn" (click)="editarSolucion(s)">Editar</button>
+                      <button type="button" class="edit-btn" (click)="abrirAsignacion(s.id)">Asignar área</button>
+                    </div>
+                  }
+                </div>
+
+                @if (asignacionesDe(s.id).length) {
+                  <div class="owners">
+                    <p class="owners-label">Quién atiende</p>
+                    @for (a of asignacionesDe(s.id); track a.id) {
+                      <div class="owner">
+                        <div>
+                          @if (a.departamentoNombre) {
+                            <strong>{{ a.departamentoNombre }}</strong>
+                          }
+                          @if (a.responsableNombre) {
+                            <span>{{ a.responsableNombre }}</span>
+                          }
+                        </div>
+                        @if (a.principal) {
+                          <em>Principal</em>
+                        }
+                        @if (puedeGestionar()) {
+                          <button type="button" class="edit-btn" (click)="abrirAsignacion(s.id, a)">Editar</button>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else if (puedeGestionar()) {
+                  <p class="empty-inline">Sin área asignada aún.</p>
+                }
+
+                @if (puedeGestionar() && kb.estado === 'PUBLICADO') {
+                  <app-solucion-efectividad [conocimientoId]="kb.id" [solucionId]="s.id" />
+                }
+
+                @if (puedeGestionar() && solucionAsignacionId === s.id) {
+                  <form class="editor nested assign-form" [formGroup]="asignacionForm" (ngSubmit)="guardarAsignacion()">
+                    <div class="assign-head full">
+                      <div>
+                        <p class="assign-kicker">Asignación</p>
+                        <strong>{{ editAsignacionId ? 'Editar área responsable' : 'Asignar área responsable' }}</strong>
+                      </div>
+                    </div>
+                    <label>
+                      Departamento
+                      <select formControlName="departamentoId">
+                        <option [ngValue]="null">Seleccione departamento</option>
+                        @for (d of departamentos; track d.id) {
+                          <option [ngValue]="d.id">{{ d.nombre }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label>
+                      Responsable
+                      <select formControlName="responsableId">
+                        <option [ngValue]="null">Opcional</option>
+                        @for (r of responsables; track r.id) {
+                          <option [ngValue]="r.id">{{ r.nombre }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label class="switch-row full">
+                      <span>
+                        <strong>Asignación principal</strong>
+                        <em>Se muestra como el área prioritaria para atender este caso.</em>
+                      </span>
+                      <input type="checkbox" formControlName="principal" />
+                    </label>
+                    <div class="editor-actions">
+                      <button type="submit" [disabled]="saving === 'asignaciones'">
+                        {{ editAsignacionId ? 'Guardar asignación' : 'Agregar asignación' }}
+                      </button>
+                      <button type="button" class="ghost-mini" (click)="cancelarAsignacion()">Cancelar</button>
+                    </div>
+                  </form>
+                }
+              </article>
+            }
+          } @else {
+            <p class="empty-state">
+              {{ puedeGestionar() ? 'Sin soluciones. Agregue el procedimiento o la derivación recomendada.' : 'Sin solución registrada para este caso.' }}
+            </p>
+          }
+
+          @if (puedeGestionar() && formAbierto.soluciones) {
+            <form class="editor" [formGroup]="solucionForm" (ngSubmit)="guardarSolucion()">
+              <label>
+                <span>Qué debe hacer el técnico <span class="req">*</span></span>
+                <input type="text" formControlName="descripcion" placeholder="Ej: reinstalar componente WINDOW y validar Bodega" />
+              </label>
+              <label>
+                Tipo
+                <select formControlName="tipo">
+                  @for (t of tiposSolucion; track t) {
+                    <option [ngValue]="t">{{ t === 'DERIVACION' ? 'Derivación' : 'Pasos' }}</option>
+                  }
+                </select>
+              </label>
+              <label class="orden">
+                <span>Orden <span class="req">*</span></span>
+                <input type="number" formControlName="orden" min="1" />
+              </label>
+              <div class="editor-actions">
+                <button type="submit" [disabled]="saving === 'soluciones'">
+                  {{ editSolucionId ? 'Guardar cambios' : 'Agregar solución' }}
+                </button>
+                <button type="button" class="ghost-mini" (click)="cerrarFormulario('soluciones')">Cancelar</button>
+              </div>
+            </form>
+          }
+        </section>
+
+        <section class="guide materials-guide">
+          <header class="guide-head">
+            <div>
+              <p class="step-label">Paso 5 · Apoyo</p>
+              <h2>Material de apoyo</h2>
+              <p class="hint">Manuales, capturas o enlaces útiles para resolver el caso.</p>
+            </div>
+            @if (puedeGestionar()) {
+              <button type="button" class="add-btn" (click)="abrirFormulario('materiales')">+ Material</button>
+            }
+          </header>
+
+          @if (loadingMateriales) {
+            <div class="skeleton-stack"><div class="sk tall"></div><div class="sk tall"></div></div>
+          } @else if (materiales.length) {
+            <ul class="materials">
+              @for (m of materiales; track m.id) {
+                <li [attr.data-tipo]="m.tipo">
+                  <div class="file-icon" [ngClass]="tipoMaterialClass(m.tipo)" aria-hidden="true">
+                    <span>{{ tipoMaterialShort(m.tipo) }}</span>
+                  </div>
+                  <div class="material-body">
+                    <div class="material-top">
+                      <strong>{{ m.nombre }}</strong>
+                      <span class="tipo-pill" [ngClass]="tipoMaterialClass(m.tipo)">{{ tipoMaterialLabel(m.tipo) }}</span>
+                    </div>
+                    <p class="material-url" [title]="m.url">{{ m.url }}</p>
+                    <div class="material-actions">
+                      <a class="open-btn" [href]="m.url" target="_blank" rel="noopener noreferrer">Abrir recurso</a>
+                      @if (puedeGestionar()) {
+                        <button type="button" class="edit-btn" (click)="editarMaterial(m)">Editar</button>
+                      }
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="empty-material">
+              <strong>Sin material de apoyo</strong>
+              <p>{{ puedeGestionar() ? 'Agregue enlaces a manuales, capturas o documentos relacionados.' : 'No hay manuales ni enlaces para este caso.' }}</p>
+            </div>
+          }
+
+          @if (puedeGestionar() && formAbierto.materiales) {
+            <form class="editor" [formGroup]="materialForm" (ngSubmit)="guardarMaterial()">
+              <label>
+                <span>Nombre <span class="req">*</span></span>
+                <input type="text" formControlName="nombre" placeholder="Manual o documento de apoyo" />
+              </label>
+              <label>
+                Tipo
+                <select formControlName="tipo">
+                  @for (t of tiposMaterial; track t) {
+                    <option [ngValue]="t">{{ tipoMaterialLabel(t) }}</option>
+                  }
+                </select>
+              </label>
+              <label class="full">
+                <span>URL o ruta <span class="req">*</span></span>
+                <input type="text" formControlName="url" placeholder="https://..." />
+              </label>
+              <div class="editor-actions">
+                <button type="submit" [disabled]="saving === 'materiales'">
+                  {{ editMaterialId ? 'Guardar cambios' : 'Agregar material' }}
+                </button>
+                <button type="button" class="ghost-mini" (click)="cerrarFormulario('materiales')">Cancelar</button>
+              </div>
+            </form>
+          }
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="panel how">
+          <h3>Cómo usar esta guía</h3>
+          <ol>
+            <li>Confirme los síntomas con el usuario.</li>
+            <li>Descarte causas en el orden indicado.</li>
+            <li>Ejecute las pruebas y valide el resultado.</li>
+            <li>Aplique la solución o derive al área responsable.</li>
+          </ol>
+        </section>
+
+        <section class="panel">
+          <h3>Ficha</h3>
+          <dl>
+            <div><dt>Creado por</dt><dd>{{ kb.creadoPor || '—' }}</dd></div>
+            <div><dt>Creado</dt><dd>{{ kb.fechaCreacion ? (kb.fechaCreacion | date: 'dd/MM/yyyy HH:mm') : '—' }}</dd></div>
+            <div><dt>Actualizado</dt><dd>{{ kb.fechaModificacion ? (kb.fechaModificacion | date: 'dd/MM/yyyy HH:mm') : '—' }}</dd></div>
+          </dl>
+        </section>
+
+        <section class="panel">
+          <h3>Acciones rápidas</h3>
+          <button type="button" class="ghost" (click)="toggleFavorito()">
+            {{ favorito ? 'Quitar de favoritos' : 'Agregar a favoritos' }}
+          </button>
+          <button type="button" class="ghost" (click)="compartir()">
+            {{ copiado ? 'Enlace copiado' : 'Compartir enlace' }}
+          </button>
+          <a class="ghost link" routerLink="/conocimiento">Volver al listado</a>
+        </section>
+      </aside>
+    </div>
+  </article>
+}
+
+@if (confirmarEliminacion) {
+  <div class="confirm-capa">
+    <div class="confirm-fondo" (click)="cancelarEliminar()"></div>
+    <div class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="eliminar-titulo">
+      <h2 id="eliminar-titulo">¿Eliminar este conocimiento?</h2>
+      <p>El conocimiento dejará de estar disponible para consulta y búsqueda.</p>
+      <div class="confirm-acciones">
+        <button type="button" class="btn-cancelar" (click)="cancelarEliminar()" [disabled]="eliminando">Cancelar</button>
+        <button type="button" class="btn-peligro" (click)="confirmarEliminar()" [disabled]="eliminando">
+          {{ eliminando ? 'Eliminando…' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,6 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: '/api',
-  /** Si Spring aún no tiene /auth/login, permite sesión local buscando el usuario por correo. */
-  authFallback: true,
+  /** Backend DEV. Si trabajan en otro PC, cambiar también proxy.conf.json. */
+  apiUrl: 'http://localhost:9090',
 };

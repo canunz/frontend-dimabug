@@ -1,0 +1,108 @@
+.form-page .franja {
+  align-items: flex-start;
+}
+
+.btn-ghost {
+  align-self: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff;
+  color: #0b1b4d;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.alert {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #b42318;
+  font-size: 14px;
+}
+
+.muted {
+  color: #64748b;
+}
+
+.kb-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #e7e9f0;
+  border-radius: 18px;
+}
+
+.kb-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+}
+
+.kb-form .req {
+  color: #dc2626;
+  font-weight: 800;
+  margin-left: 2px;
+}
+
+.kb-form .full {
+  grid-column: 1 / -1;
+}
+
+.kb-form input,
+.kb-form select,
+.kb-form textarea {
+  border: 1px solid #dbe1ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  text-transform: none;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.kb-form small {
+  font-weight: 500;
+  text-transform: none;
+  color: #64748b;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.form-actions button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: #1e4fd6;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.form-actions a {
+  color: #64748b;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .kb-form {
+    grid-template-columns: 1fr;
+  }
+}

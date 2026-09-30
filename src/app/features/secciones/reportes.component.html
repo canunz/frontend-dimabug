@@ -1,0 +1,144 @@
+<section class="rep">
+  <p class="kicker">Analítica</p>
+  <div class="head">
+    <div>
+      <h1>Reportes</h1>
+      <p class="lead">Uso real de la base de conocimiento y de los procedimientos del equipo.</p>
+    </div>
+    <a routerLink="/conocimiento" class="link">Ver conocimiento</a>
+  </div>
+
+  <div class="kpis">
+    <article>
+      <span class="icon blue">KB</span>
+      <strong>{{ conocimientos.length }}</strong>
+      <em>Conocimientos publicados</em>
+    </article>
+    <article>
+      <span class="icon navy">PR</span>
+      <strong>{{ procedimientos.length }}</strong>
+      <em>Procedimientos frecuentes</em>
+    </article>
+    <article>
+      <span class="icon sky">VW</span>
+      <strong>{{ totalVistas() | number }}</strong>
+      <em>Visualizaciones</em>
+    </article>
+    <article>
+      <span class="icon green">OK</span>
+      <strong>{{ totalUtil() | number }}</strong>
+      <em>Marcados como útiles · {{ utilidad() }}%</em>
+    </article>
+  </div>
+
+  <div class="grid">
+    <section class="card wide">
+      <div class="card-head">
+        <div>
+          <h2>Actividad de los últimos 6 meses</h2>
+          <p>Consultas a la base de conocimiento y respuestas útiles.</p>
+        </div>
+        <div class="legend">
+          <span><i class="dot blue"></i> Visualizaciones</span>
+          <span><i class="dot green"></i> Útiles</span>
+        </div>
+      </div>
+      <svg class="line" [attr.viewBox]="'0 0 ' + linea().w + ' ' + linea().h" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e4fd6" stop-opacity="0.22" />
+            <stop offset="100%" stop-color="#1e4fd6" stop-opacity="0.02" />
+          </linearGradient>
+        </defs>
+        @for (p of linea().puntos; track p.label) {
+          <line [attr.x1]="p.x" [attr.x2]="p.x" [attr.y1]="linea().pad" [attr.y2]="linea().h - linea().pad" stroke="#eef2ff" />
+        }
+        <polygon [attr.points]="linea().area" fill="url(#areaFill)" />
+        <polyline [attr.points]="linea().line" fill="none" stroke="#1e4fd6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        @for (p of linea().puntos; track p.label) {
+          <circle [attr.cx]="p.x" [attr.cy]="p.y" r="4.5" fill="#fff" stroke="#1e4fd6" stroke-width="2.5" />
+        }
+      </svg>
+      <div class="axis">
+        @for (mes of meses; track mes.label) {
+          <span>{{ mes.label }}</span>
+        }
+      </div>
+      <div class="bars">
+        @for (mes of meses; track mes.label) {
+          <div class="col">
+            <div class="stack">
+              <b [style.height.%]="(mes.vistas / maxMes) * 100"></b>
+              <i [style.height.%]="(mes.utiles / maxMes) * 100"></i>
+            </div>
+            <small>{{ mes.label }}</small>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Efectividad</h2>
+      <p>Porcentaje de consultas marcadas como útiles.</p>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 140 140">
+          <circle cx="70" cy="70" [attr.r]="donut().radio" fill="none" stroke="#e8eefc" stroke-width="14" />
+          <circle
+            cx="70"
+            cy="70"
+            [attr.r]="donut().radio"
+            fill="none"
+            stroke="#16a34a"
+            stroke-width="14"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="donut().utiles + ' ' + donut().resto"
+            transform="rotate(-90 70 70)"
+          />
+        </svg>
+        <div class="donut-label">
+          <strong>{{ utilidad() }}%</strong>
+          <span>útil</span>
+        </div>
+      </div>
+      <ul class="facts">
+        <li><span>Marcados útiles</span><b>{{ totalUtil() }}</b></li>
+        <li><span>Consultas totales</span><b>{{ totalVistas() }}</b></li>
+        <li><span>Soluciones activas</span><b>{{ soluciones.length }}</b></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Más consultados</h2>
+      <p>Conocimientos con mayor tráfico del equipo.</p>
+      <div class="rank">
+        @for (item of ranking(); track item.id) {
+          <a [routerLink]="['/conocimiento', item.id]">
+            <div>
+              <strong>{{ item.titulo }}</strong>
+              <em>{{ item.categoria }} · {{ item.visualizaciones }} vistas</em>
+            </div>
+            <div class="bar"><i [style.width.%]="item.ancho"></i></div>
+          </a>
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Uso por categoría</h2>
+      <p>Distribución de consultas según el tipo de incidente.</p>
+      <div class="cats">
+        @for (cat of categorias(); track cat.nombre) {
+          <div>
+            <div class="cat-row">
+              <strong>{{ cat.nombre }}</strong>
+              <span>{{ cat.valor }}</span>
+            </div>
+            <div class="bar"><i [style.width.%]="cat.ancho"></i></div>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+</section>

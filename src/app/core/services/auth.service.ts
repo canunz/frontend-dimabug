@@ -1,50 +1,60 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { AuthSession, Usuario, esAdministrador } from '../models/usuario.model';
-import { UsuarioService } from './usuario.service';
+import { Observable, catchError, map, tap, throwError } from 'rxjs';
+import { apiUrl } from '../config/api';
+import { AuthSession, Usuario, esAdministrador, esSoporte, esStaff } from '../models/usuario.model';
 
 const STORAGE_KEY = 'dimabug.auth';
+
+interface LoginResponse {
+  token: string;
+  usuarioId: number;
+  nombre: string;
+  email: string;
+  rol: string;
+}
+
+interface AuthMeResponse {
+  email: string;
+  estado: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly usuarios = inject(UsuarioService);
   private readonly router = inject(Router);
 
   private readonly sessionSignal = signal<AuthSession | null>(this.readSession());
 
   readonly session = this.sessionSignal.asReadonly();
   readonly usuario = computed(() => this.sessionSignal()?.usuario ?? null);
-  readonly isAuthenticated = computed(() => !!this.sessionSignal()?.usuario);
+  readonly isAuthenticated = computed(() => {
+    const session = this.sessionSignal();
+    return !!session?.token && !!session.usuario;
+  });
   readonly isAdmin = computed(() => esAdministrador(this.sessionSignal()?.usuario));
+  readonly isSoporte = computed(() => esSoporte(this.sessionSignal()?.usuario));
+  readonly isStaff = computed(() => esStaff(this.sessionSignal()?.usuario));
 
-  login(identifier: string, password: string): Observable<AuthSession> {
-    const body = {
-      username: identifier.trim(),
-      email: identifier.trim(),
-      password,
-    };
+  login(email: string, password: string): Observable<AuthSession> {
+    return this.http
+      .post<LoginResponse>(apiUrl('/auth/login'), {
+        email: email.trim(),
+        password,
+      })
+      .pipe(
+        map((res) => this.sessionFromLogin(res)),
+        tap((session) => this.persist(session)),
+        catchError((err: HttpErrorResponse) => throwError(() => new Error(this.loginError(err)))),
+      );
+  }
 
-    return this.http.post<unknown>(`${environment.apiUrl}/auth/login`, body).pipe(
-      map((res) => this.normalizeSession(res)),
-      catchError((err: HttpErrorResponse) => {
-        if (environment.authFallback && (err.status === 404 || err.status === 0)) {
-          return this.fallbackLogin(identifier.trim());
-        }
-        const apiMsg =
-          typeof err.error === 'object'
-            ? (err.error?.message || err.error?.error)
-            : undefined;
-        const message =
-          err.status === 401 || err.status === 403
-            ? 'Usuario o contraseña incorrectos.'
-            : this.safeApiMessage(apiMsg, 'No fue posible iniciar sesión. Intente nuevamente.');
-        return throwError(() => new Error(message));
-      }),
-      tap((session) => this.persist(session)),
+  me(): Observable<AuthMeResponse> {
+    return this.http.get<AuthMeResponse>(apiUrl('/auth/me')).pipe(
+      catchError((err: HttpErrorResponse) =>
+        throwError(() => new Error(this.httpError(err, 'No fue posible comprobar la autenticación.'))),
+      ),
     );
   }
 
@@ -54,158 +64,135 @@ export class AuthService {
     this.router.navigateByUrl('/login');
   }
 
+  /** Actualiza los datos visibles de la sesión sin tocar el token. */
+  actualizarSesion(parcial: Partial<Usuario>): void {
+    const session = this.sessionSignal();
+    if (!session) {
+      return;
+    }
+    this.persist({
+      ...session,
+      usuario: { ...session.usuario, ...parcial },
+    });
+  }
+
   token(): string | undefined {
     return this.sessionSignal()?.token;
   }
 
   solicitarCodigo(email: string): Observable<{ message: string; debugCode?: string }> {
     return this.http
-      .post<{ message?: string; debugCode?: string; codigo?: string }>(
-        `${environment.apiUrl}/auth/recuperar/email`,
-        { email },
-      )
+      .post<{ message?: string; debugCode?: string; codigo?: string }>(apiUrl('/auth/recuperar/email'), {
+        email,
+      })
       .pipe(
         map((res) => ({
           message: res.message || 'Te enviamos un código de 5 dígitos a tu correo.',
           debugCode: res.debugCode || res.codigo,
         })),
-        catchError((err: HttpErrorResponse) => {
-          if (environment.authFallback && (err.status === 404 || err.status === 0)) {
-            return this.usuarios.listar().pipe(
-              switchMap((list) => {
-                const found = list.find(
-                  (u) => u.usuarioEmail.toLowerCase() === email.trim().toLowerCase(),
-                );
-                if (!found) {
-                  return throwError(() => new Error('No encontramos una cuenta con ese correo.'));
-                }
-                const code = String(Math.floor(10000 + Math.random() * 90000));
-                sessionStorage.setItem('dimabug.reset.email', email.trim());
-                sessionStorage.setItem('dimabug.reset.code', code);
-                sessionStorage.setItem('dimabug.reset.verified', '0');
-                return of({
-                  message: 'Si el correo está registrado, recibirá un código de verificación.',
-                  debugCode: environment.production ? undefined : code,
-                });
-              }),
-            );
-          }
-          return throwError(
-            () =>
-              new Error(
-                this.safeApiMessage(err.error?.message, 'No fue posible enviar el código. Intente más tarde.'),
-              ),
-          );
-        }),
+        catchError((err: HttpErrorResponse) =>
+          throwError(() => new Error(this.recoverError(err, 'No fue posible enviar el código. Intente más tarde.'))),
+        ),
       );
   }
 
   validarCodigo(email: string, code: string): Observable<void> {
-    return this.http
-      .post<unknown>(`${environment.apiUrl}/auth/recuperar/codigo`, { email, code })
-      .pipe(
-        map(() => void 0),
-        catchError((err: HttpErrorResponse) => {
-          if (environment.authFallback && (err.status === 404 || err.status === 0)) {
-            const storedEmail = sessionStorage.getItem('dimabug.reset.email');
-            const storedCode = sessionStorage.getItem('dimabug.reset.code');
-            if (
-              storedEmail?.toLowerCase() === email.trim().toLowerCase() &&
-              storedCode === code.trim()
-            ) {
-              sessionStorage.setItem('dimabug.reset.verified', '1');
-              return of(void 0);
-            }
-            return throwError(() => new Error('Código incorrecto.'));
-          }
-          return throwError(
-            () =>
-              new Error(this.safeApiMessage(err.error?.message, 'El código ingresado no es válido.')),
-          );
-        }),
-      );
+    return this.http.post<unknown>(apiUrl('/auth/recuperar/codigo'), { email, code }).pipe(
+      map(() => void 0),
+      catchError((err: HttpErrorResponse) =>
+        throwError(() => new Error(this.recoverError(err, 'El código ingresado no es válido.'))),
+      ),
+    );
   }
 
   cambiarPassword(email: string, newPassword: string): Observable<void> {
     return this.http
-      .post<unknown>(`${environment.apiUrl}/auth/recuperar/password`, {
+      .post<unknown>(apiUrl('/auth/recuperar/password'), {
         email,
         password: newPassword,
         newPassword,
       })
       .pipe(
         map(() => void 0),
-        catchError((err: HttpErrorResponse) => {
-          if (environment.authFallback && (err.status === 404 || err.status === 0)) {
-            const verified = sessionStorage.getItem('dimabug.reset.verified') === '1';
-            const storedEmail = sessionStorage.getItem('dimabug.reset.email');
-            if (!verified || storedEmail?.toLowerCase() !== email.trim().toLowerCase()) {
-              return throwError(() => new Error('Debes validar el código primero.'));
-            }
-            return this.usuarios.listar().pipe(
-              switchMap((list) => {
-                const user = list.find(
-                  (u) => u.usuarioEmail.toLowerCase() === email.trim().toLowerCase(),
-                );
-                if (!user) {
-                  return throwError(() => new Error('Usuario no encontrado.'));
-                }
-                return this.usuarios
-                  .actualizar(user.usuarioId, {
-                    usuarioNombre: user.usuarioNombre,
-                    usuarioEmail: user.usuarioEmail,
-                    rolId: user.rolId || user.rol?.rolId || 0,
-                    usuarioEstado: user.usuarioEstado,
-                    usuarioPassword: newPassword,
-                  })
-                  .pipe(
-                    tap(() => {
-                      sessionStorage.removeItem('dimabug.reset.email');
-                      sessionStorage.removeItem('dimabug.reset.code');
-                      sessionStorage.removeItem('dimabug.reset.verified');
-                    }),
-                    map(() => void 0),
-                  );
-              }),
-            );
-          }
-          return throwError(
+        catchError((err: HttpErrorResponse) =>
+          throwError(
             () =>
-              new Error(
-                this.safeApiMessage(
-                  err.error?.message,
-                  'No fue posible actualizar la contraseña. Intente más tarde.',
-                ),
-              ),
-          );
-        }),
+              new Error(this.recoverError(err, 'No fue posible actualizar la contraseña. Intente más tarde.')),
+          ),
+        ),
       );
   }
 
-  private fallbackLogin(identifier: string): Observable<AuthSession> {
-    return this.usuarios.listar().pipe(
-      switchMap((list) => {
-        const needle = identifier.toLowerCase();
-        const found = list.find((u) => {
-          const email = u.usuarioEmail.toLowerCase();
-          const local = email.split('@')[0];
-          const nombre = u.usuarioNombre.toLowerCase();
-          return email === needle || local === needle || nombre.includes(needle);
-        });
-        if (!found || !found.usuarioEstado) {
-          return throwError(() => new Error('Usuario o contraseña incorrectos.'));
-        }
-        return of({ usuario: found });
-      }),
-      catchError((err: HttpErrorResponse | Error) => {
-        if (err instanceof Error && !(err instanceof HttpErrorResponse)) {
-          return throwError(() => err);
-        }
-        return throwError(
-          () => new Error('El servicio no está disponible en este momento. Intente más tarde.'),
-        );
-      }),
-    );
+  private sessionFromLogin(res: LoginResponse): AuthSession {
+    if (!res?.token) {
+      throw new Error('La API no devolvió un token de autenticación.');
+    }
+
+    const usuario: Usuario = {
+      usuarioId: Number(res.usuarioId),
+      usuarioNombre: res.nombre,
+      usuarioEmail: res.email,
+      usuarioEstado: true,
+      rolNombre: res.rol,
+      rol: res.rol ? { rolId: 0, rolNombre: res.rol } : undefined,
+    };
+
+    return { token: res.token, usuario };
+  }
+
+  private loginError(err: HttpErrorResponse): string {
+    if (err.status === 400) {
+      return this.safeApiMessage(this.extractApiMessage(err), 'Los datos enviados no son válidos.');
+    }
+    if (err.status === 401) {
+      return 'Usuario o contraseña incorrectos.';
+    }
+    if (err.status === 403) {
+      return 'Su cuenta no tiene autorización o está inactiva.';
+    }
+    if (err.status === 0) {
+      return 'No se pudo conectar con el servidor. Intente más tarde.';
+    }
+    if (err.status === 404) {
+      return 'El servidor no tiene el login activo. Reinicia el backend de este proyecto (puerto 8080) e intenta de nuevo.';
+    }
+    return this.httpError(err, 'No fue posible iniciar sesión. Intente nuevamente.');
+  }
+
+  private recoverError(err: HttpErrorResponse, fallback: string): string {
+    if (err.status === 404 || err.status === 401 || err.status === 403) {
+      return 'La recuperación de contraseña aún no está disponible. Use su correo y clave para entrar, o contacte al administrador.';
+    }
+    return this.httpError(err, fallback);
+  }
+
+  private httpError(err: HttpErrorResponse, fallback: string): string {
+    if (err.status === 400) {
+      return this.safeApiMessage(this.extractApiMessage(err), 'Los datos enviados no son válidos.');
+    }
+    if (err.status === 401) {
+      return 'No autenticado o token inválido.';
+    }
+    if (err.status === 403) {
+      return 'No tiene autorización para esta operación.';
+    }
+    if (err.status === 404) {
+      return fallback;
+    }
+    if (err.status === 0) {
+      return 'No se pudo conectar con el servidor. Intente más tarde.';
+    }
+    return this.safeApiMessage(this.extractApiMessage(err), fallback);
+  }
+
+  private extractApiMessage(err: HttpErrorResponse): unknown {
+    if (typeof err.error === 'string') {
+      return err.error;
+    }
+    if (err.error && typeof err.error === 'object') {
+      return err.error.message || err.error.error;
+    }
+    return undefined;
   }
 
   /** Evita filtrar mensajes técnicos (puertos, stack, endpoints) al usuario. */
@@ -218,21 +205,11 @@ export class AuthService {
       return fallback;
     }
     const technical =
-      /spring|boot|:8080|:8081|localhost|\/api\/|httpd|apache|proxy|endpoint|stack|exception|nullpointer/i;
+      /spring|boot|:8080|:8081|localhost|\/api\/|httpd|apache|proxy|endpoint|stack|exception|nullpointer|^not found$|^unauthorized$|^forbidden$/i;
     if (technical.test(msg) || msg.length > 160) {
       return fallback;
     }
     return msg;
-  }
-
-  private normalizeSession(raw: unknown): AuthSession {
-    const data = raw as Record<string, unknown>;
-    const token = (data['token'] || data['accessToken'] || data['jwt']) as string | undefined;
-    const userRaw = data['usuario'] || data['user'] || data;
-    return {
-      token,
-      usuario: this.usuarios.normalizeUsuario(userRaw),
-    };
   }
 
   private persist(session: AuthSession): void {
@@ -246,7 +223,12 @@ export class AuthService {
       if (!raw) {
         return null;
       }
-      return JSON.parse(raw) as AuthSession;
+      const session = JSON.parse(raw) as AuthSession;
+      if (!session?.token || !session.usuario) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return session;
     } catch {
       return null;
     }

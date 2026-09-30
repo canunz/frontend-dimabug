@@ -1,0 +1,133 @@
+<section class="detalle">
+  <p class="crumb">
+    <a routerLink="/procedimientos">Procedimientos</a>
+    <span>/</span>
+    Detalle
+  </p>
+
+  @if (loading && !item) {
+    <p class="muted">Cargando procedimiento…</p>
+  } @else if (error && !item) {
+    <p class="alerta">
+      {{ error }}
+      <a routerLink="/procedimientos">Volver al listado</a>
+    </p>
+  } @else if (item) {
+    <header class="hero">
+      <div>
+        <span class="badge" [class.publicado]="item.estado === 'PUBLICADO'">
+          {{ item.estado === 'PUBLICADO' ? 'Publicado' : 'Borrador' }}
+        </span>
+        <h1>{{ item.nombre }}</h1>
+        <p>{{ item.descripcion || 'Sin descripción.' }}</p>
+      </div>
+      <div class="hero-acciones">
+        <a class="iniciar secundario" [routerLink]="['/procedimientos', item.id, 'editar']">Editar</a>
+        @if (esAdministrador() && item.estado === 'BORRADOR') {
+          <button type="button" class="iniciar" (click)="publicar()" [disabled]="publicando">
+            {{ publicando ? 'Publicando…' : 'Publicar' }}
+          </button>
+        }
+        @if (item.estado === 'PUBLICADO') {
+          <button type="button" class="iniciar" (click)="iniciar()" [disabled]="iniciando">
+            {{ iniciando ? 'Iniciando…' : 'Iniciar procedimiento' }}
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (error) {
+      <p class="alerta">{{ error }}</p>
+    }
+
+    <section class="pasos">
+      <div class="pasos-head">
+        <h2>Pasos</h2>
+        <button type="button" class="texto" (click)="abrirPaso()">+ Paso</button>
+      </div>
+
+      @if (!pasos.length) {
+        <p class="muted">Todavía no hay pasos.</p>
+      } @else {
+        @for (paso of pasos; track paso.id) {
+          <article>
+            <header>
+              <div>
+                <strong>Paso {{ paso.orden }}</strong>
+                <p>{{ paso.instruccion }}</p>
+                @if (paso.esCritico) {
+                  <em class="critico">Paso crítico</em>
+                }
+              </div>
+              <button type="button" class="texto" (click)="abrirPaso(paso)">Editar</button>
+            </header>
+
+            @if (materialesDe(paso.id).length) {
+              <ul>
+                @for (material of materialesDe(paso.id); track material.id) {
+                  <li>
+                    <a [href]="material.url" target="_blank" rel="noopener">
+                      {{ iconoTipo(material.tipo) }} {{ material.nombre }}
+                    </a>
+                    <button type="button" class="texto" (click)="abrirMaterial(paso.id, material)">Editar</button>
+                  </li>
+                }
+              </ul>
+            }
+            <button type="button" class="texto" (click)="abrirMaterial(paso.id)">+ Material</button>
+
+            @if (materialPasoId === paso.id) {
+              <form class="editor" (ngSubmit)="guardarMaterial()">
+                <label>
+                  Nombre *
+                  <input name="mnombre" maxlength="150" [(ngModel)]="materialNombre" />
+                </label>
+                <label>
+                  Tipo *
+                  <select name="mtipo" [(ngModel)]="materialTipo">
+                    @for (tipo of tipos; track tipo) {
+                      <option [ngValue]="tipo">{{ etiquetaTipo(tipo) }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  URL *
+                  <input name="murl" maxlength="500" [(ngModel)]="materialUrl" />
+                </label>
+                <div class="fila">
+                  <button type="submit" [disabled]="guardandoMaterial">
+                    {{ guardandoMaterial ? 'Guardando…' : (editMaterialId ? 'Guardar material' : 'Agregar material') }}
+                  </button>
+                  <button type="button" class="texto" (click)="cerrarMaterial()">Cancelar</button>
+                </div>
+              </form>
+            }
+          </article>
+        }
+      }
+
+      @if (pasoAbierto) {
+        <form class="editor" (ngSubmit)="guardarPaso()">
+          <label>
+            Orden *
+            <input name="orden" type="number" min="1" [(ngModel)]="orden" />
+          </label>
+          <label>
+            Instrucción *
+            <textarea name="instruccion" rows="3" [(ngModel)]="instruccion"></textarea>
+          </label>
+          <label class="check">
+            <input name="critico" type="checkbox" [(ngModel)]="esCritico" />
+            Paso crítico
+          </label>
+          <div class="fila">
+            <button type="submit" [disabled]="guardandoPaso">
+              {{ guardandoPaso ? 'Guardando…' : (editPasoId ? 'Guardar paso' : 'Agregar paso') }}
+            </button>
+            <button type="button" class="texto" (click)="cerrarPaso()">Cancelar</button>
+          </div>
+        </form>
+      }
+    </section>
+  }
+</section>

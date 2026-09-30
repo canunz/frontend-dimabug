@@ -1,0 +1,113 @@
+<section class="efectividad" aria-label="Efectividad de la solución">
+  <div class="efectividad-head">
+    <h3>Efectividad</h3>
+    @if (cargando && !efectividad) {
+      <span class="estado">Cargando efectividad…</span>
+    }
+  </div>
+
+  @if (errorCarga) {
+    <p class="alerta">{{ errorCarga }}</p>
+  } @else if (sinEvaluaciones) {
+    <p class="sin">Sin evaluaciones</p>
+  } @else if (efectividad) {
+    <dl class="cifras">
+      <div>
+        <dt>Funcionó</dt>
+        <dd>{{ efectividad.totalFunciono }}</dd>
+      </div>
+      <div>
+        <dt>No funcionó</dt>
+        <dd>{{ efectividad.totalNoFunciono }}</dd>
+      </div>
+      <div>
+        <dt>Aplicaciones</dt>
+        <dd>{{ efectividad.totalAplicaciones }}</dd>
+      </div>
+      <div>
+        <dt>Efectividad</dt>
+        <dd>{{ porcentajeTexto }}</dd>
+      </div>
+    </dl>
+  }
+
+  <p class="pregunta">¿Esta solución funcionó?</p>
+  <div class="acciones">
+    <button type="button" class="voto si" (click)="abrir(true)" [disabled]="registrando">👍 Funcionó</button>
+    <button type="button" class="voto no" (click)="abrir(false)" [disabled]="registrando">👎 No funcionó</button>
+    <button type="button" class="link" (click)="alternarHistorial()">
+      {{ historialVisible ? 'Ocultar historial' : 'Ver historial' }}
+    </button>
+  </div>
+
+  @if (aviso) {
+    <p class="ok">{{ aviso }}</p>
+  }
+
+  @if (panelAbierto) {
+    <form class="registro" (ngSubmit)="registrar()">
+      <fieldset [disabled]="registrando">
+        <legend>Registrar aplicación</legend>
+        <div class="eleccion">
+          <label>
+            <input type="radio" name="funciono-{{ solucionId }}" [checked]="eleccion === true" (change)="eleccion = true" />
+            Funcionó
+          </label>
+          <label>
+            <input type="radio" name="funciono-{{ solucionId }}" [checked]="eleccion === false" (change)="eleccion = false" />
+            No funcionó
+          </label>
+        </div>
+        <label class="comentario">
+          Comentario opcional
+          <textarea
+            name="comentario"
+            rows="3"
+            maxlength="300"
+            [(ngModel)]="comentario"
+            placeholder="Qué ocurrió al aplicar la solución"
+          ></textarea>
+          <span class="cuenta" [class.limite]="comentario.length >= 300">{{ comentario.length }} / 300</span>
+        </label>
+      </fieldset>
+      @if (errorRegistro) {
+        <p class="alerta">{{ errorRegistro }}</p>
+      }
+      <div class="registro-acciones">
+        <button type="button" class="secundario" (click)="cerrarPanel()" [disabled]="registrando">Cancelar</button>
+        <button type="submit" [disabled]="registrando || eleccion == null || comentario.length > 300">
+          {{ registrando ? 'Registrando…' : 'Registrar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (historialVisible) {
+    <div class="historial">
+      @if (cargandoHistorial) {
+        <p class="estado">Cargando historial…</p>
+      } @else if (errorHistorial) {
+        <p class="alerta">{{ errorHistorial }}</p>
+      } @else if (!historial.length) {
+        <p class="sin">Sin evaluaciones</p>
+      } @else {
+        <ol>
+          @for (item of historial; track item.id) {
+            <li>
+              <div class="historial-top">
+                <strong>{{ item.funciono ? 'Funcionó' : 'No funcionó' }}</strong>
+                <span>{{ item.usuario.nombre || 'Usuario' }}</span>
+                @if (item.fecha) {
+                  <time [attr.datetime]="item.fecha">{{ item.fecha | date: 'dd/MM/yyyy HH:mm' }}</time>
+                }
+              </div>
+              @if (item.comentario) {
+                <p>{{ item.comentario }}</p>
+              }
+            </li>
+          }
+        </ol>
+      }
+    </div>
+  }
+</section>

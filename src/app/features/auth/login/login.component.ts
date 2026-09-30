@@ -20,26 +20,35 @@ export class LoginComponent {
   showPass = false;
 
   form = this.fb.nonNullable.group({
-    username: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
   });
 
   submit(): void {
     this.error = '';
-    if (this.form.invalid) {
+    const email = this.form.controls.email.value.trim();
+    const password = this.form.controls.password.value;
+    this.form.controls.email.setValue(email);
+
+    if (!email || !password) {
       this.form.markAllAsTouched();
-      this.error = 'Ingrese usuario y contraseña.';
+      this.error = 'Ingrese su correo y su contraseña.';
+      return;
+    }
+    if (!email.includes('@') || this.form.controls.email.invalid) {
+      this.form.markAllAsTouched();
+      this.error = 'Use el correo completo, por ejemplo usuario@correo.cl (no el usuario corto).';
       return;
     }
     this.loading = true;
-    const { username, password } = this.form.getRawValue();
-    this.auth.login(username, password).subscribe({
+    this.form.disable({ emitEvent: false });
+    this.auth.login(email, password).subscribe({
       next: () => {
-        this.loading = false;
         this.router.navigateByUrl('/inicio');
       },
       error: (err: Error) => {
         this.loading = false;
+        this.form.enable({ emitEvent: false });
         const msg = err?.message || '';
         const technical =
           /spring|boot|:8080|:8081|localhost|\/api\/|httpd|apache|proxy|endpoint/i.test(msg);

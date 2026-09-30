@@ -9,8 +9,10 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   background: #f5f6fa;
-  color: #1d2433;
+  color: #0f172a;
 }
 
 body.tema-oscuro {
@@ -22,4 +24,21 @@ button,
 input,
 select {
   font: inherit;
+}
+
+a.btn-crear,
+a.btn-sec,
+a.act,
+.franja a,
+.acts a {
+  text-decoration: none;
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
 }

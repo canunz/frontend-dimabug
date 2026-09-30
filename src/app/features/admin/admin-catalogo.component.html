@@ -1,0 +1,113 @@
+<section class="maestro">
+  <div class="franja">
+    <p class="crumb">
+      <a routerLink="/admin">Sitio administrativo</a>
+      <span>/</span>
+      {{ meta().seccion }}
+    </p>
+    <div class="franja-row">
+      <div>
+        <h1>{{ meta().titulo }}</h1>
+        <p class="lead">{{ items().length }} registro{{ items().length === 1 ? '' : 's' }} en este catálogo</p>
+      </div>
+      <div class="franja-acts">
+        <a routerLink="/admin" class="btn-sec">Volver al admin</a>
+        <button type="button" class="btn-crear" (click)="openCreate()">Añadir {{ meta().singular }}</button>
+      </div>
+    </div>
+  </div>
+
+  <app-catalogo-tabs />
+
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-acciones">Acciones</th>
+          <th>#</th>
+          <th>{{ meta().titulo }}</th>
+          @if (meta().extra) {
+            <th>{{ meta().extra }}</th>
+          }
+          @if (meta().activo) {
+            <th>Estado</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id; let i = $index) {
+          <tr>
+            <td>
+              <div class="acts">
+                <button type="button" class="act edit" (click)="openEdit(item.id, item.nombre, item.extra, item.activo !== false)">
+                  Editar
+                </button>
+                <button type="button" class="act del" (click)="eliminar(item.id, item.nombre)">
+                  Eliminar
+                </button>
+              </div>
+            </td>
+            <td class="id">{{ i + 1 }}</td>
+            <td><strong>{{ item.nombre }}</strong></td>
+            @if (meta().extra) {
+              <td>{{ item.extra || '—' }}</td>
+            }
+            @if (meta().activo) {
+              <td>
+                <span class="estado" [class.activo]="item.activo !== false" [class.inactivo]="item.activo === false">
+                  {{ item.activo === false ? 'Inactivo' : 'Activo' }}
+                </span>
+              </td>
+            }
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="3 + (meta().extra ? 1 : 0) + (meta().activo ? 1 : 0)" class="vacio">
+              No hay registros. Usa Añadir para crear el primero.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+@if (modalOpen) {
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" (click)="modalOpen = false"></div>
+    <div class="modal-dialog modal-pro">
+      <header class="modal-head">
+        <span class="modal-icon">+</span>
+        <div>
+          <p>{{ meta().titulo }}</p>
+          <h2>{{ editId ? 'Modificar registro' : 'Añadir registro' }}</h2>
+        </div>
+      </header>
+      <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+        <label class="full">
+          Nombre
+          <input type="text" formControlName="nombre" [placeholder]="'Nombre de ' + meta().titulo.toLowerCase()" />
+        </label>
+        @if (meta().extra) {
+          <label class="full">
+            {{ meta().extra }}
+            <input type="text" formControlName="extra" />
+          </label>
+        }
+        @if (meta().activo) {
+          <label class="switch-row full">
+            <span>
+              <strong>Registro activo</strong>
+              <em>Los inactivos no aparecen en los formularios operativos.</em>
+            </span>
+            <input type="checkbox" formControlName="activo" />
+          </label>
+        }
+        <div class="form-actions full">
+          <button type="button" class="btn-sec" (click)="modalOpen = false">Cancelar</button>
+          <button type="submit" class="btn-crear">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
